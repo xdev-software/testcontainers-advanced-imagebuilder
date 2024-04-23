@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>software.xdev</groupId>
-	<artifactId>template-placeholder-demo</artifactId>
+	<artifactId>testcontainers-advanced-imagebuilder-demo</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
@@ -27,8 +27,14 @@
 	<dependencies>
 		<dependency>
 			<groupId>software.xdev</groupId>
-			<artifactId>template-placeholder</artifactId>
+			<artifactId>testcontainers-advanced-imagebuilder</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>2.0.13</version>
 		</dependency>
 	</dependencies>
 
