@@ -16,6 +16,7 @@
 
 	<modules>
 		<module>testcontainers-java-advanced-imagebuilder</module>
+		<module>testcontainers-java-advanced-imagebuilder-dummy-app</module>
 		<module>testcontainers-java-advanced-imagebuilder-demo</module>
 	</modules>
 
