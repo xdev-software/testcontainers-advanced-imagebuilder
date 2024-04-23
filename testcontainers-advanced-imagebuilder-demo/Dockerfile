@@ -2,7 +2,7 @@
 ARG JAVA_VERSION=21
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git bash
 
 # Create non root user
 ARG userName=limitedbuild
