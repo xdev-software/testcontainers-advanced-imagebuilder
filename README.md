@@ -1,6 +1,6 @@
-[![Latest version](https://img.shields.io/maven-central/v/software.xdev/testcontainers-java-advanced-imagebuilder?logo=apache%20maven)](https://mvnrepository.com/artifact/software.xdev/testcontainers-java-advanced-imagebuilder)
-[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/testcontainers-java-advanced-imagebuilder/checkBuild.yml?branch=develop)](https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder/actions/workflows/checkBuild.yml?query=branch%3Adevelop)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_testcontainers-java-advanced-imagebuilder&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_testcontainers-java-advanced-imagebuilder)
+[![Latest version](https://img.shields.io/maven-central/v/software.xdev/testcontainers-advanced-imagebuilder?logo=apache%20maven)](https://mvnrepository.com/artifact/software.xdev/testcontainers-advanced-imagebuilder)
+[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/testcontainers-advanced-imagebuilder/checkBuild.yml?branch=develop)](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/actions/workflows/checkBuild.yml?query=branch%3Adevelop)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_testcontainers-advanced-imagebuilder&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_testcontainers-advanced-imagebuilder)
 
 # Advanced Image-Builder for Testcontainers Java
 
@@ -15,10 +15,10 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Makes logger non generic and therefore controllable
 * Cleaned up some code
 
-A common use case - that can also be seen [inside the demo](./testcontainers-java-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java) - is for creating an image - used in e.g. Integration tests - for an application that is also inside the same repo.
+A common use case - that can also be seen [inside the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java) - is for creating an image - used in e.g. Integration tests - for an application that is also inside the same repo.
 
 ## Installation
-[Installation guide for the latest release](https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder/releases/latest#Installation)
+[Installation guide for the latest release](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/releases/latest#Installation)
 
 ## Support
 If you need support as soon as possible and you can't wait for any pull request, feel free to use [our support](https://xdev.software/en/services/support).
@@ -27,4 +27,4 @@ If you need support as soon as possible and you can't wait for any pull request,
 See the [contributing guide](./CONTRIBUTING.md) for detailed instructions on how to get started with our project.
 
 ## Dependencies and Licenses
-View the [license of the current project](LICENSE) or the [summary including all dependencies](https://xdev-software.github.io/testcontainers-java-advanced-imagebuilder/dependencies)
+View the [license of the current project](LICENSE) or the [summary including all dependencies](https://xdev-software.github.io/testcontainers-advanced-imagebuilder/dependencies)

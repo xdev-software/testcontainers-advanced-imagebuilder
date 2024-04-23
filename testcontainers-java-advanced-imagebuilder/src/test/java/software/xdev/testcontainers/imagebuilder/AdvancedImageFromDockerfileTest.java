@@ -40,11 +40,11 @@ class AdvancedImageFromDockerfileTest
 				".cmd",
 				"/renovate.json5",
 				// We need to keep the pom.xml as maven can't resolve the modules otherwise
-				"testcontainers-java-advanced-imagebuilder/src/**",
-				"testcontainers-java-advanced-imagebuilder/test/**",
-				"testcontainers-java-advanced-imagebuilder-demo/src/**"
+				"testcontainers-advanced-imagebuilder/src/**",
+				"testcontainers-advanced-imagebuilder/test/**",
+				"testcontainers-advanced-imagebuilder-demo/src/**"
 			)
-			.withDockerFilePath(Paths.get("../testcontainers-java-advanced-imagebuilder-demo/Dockerfile"))
+			.withDockerFilePath(Paths.get("../testcontainers-advanced-imagebuilder-demo/Dockerfile"))
 			.withBaseDir(Paths.get("../"));
 		
 		Assertions.assertDoesNotThrow(() -> builder.get());

@@ -23,7 +23,7 @@ USER ${userName}
 COPY --chown=${userName}:${groupName} . ./
 
 # RUN chmod +x ./mvnw
-ARG mvncmd='clean package -pl "testcontainers-java-advanced-imagebuilder-dummy-app" -am -T2C -Dmaven.test.skip'
+ARG mvncmd='clean package -pl "testcontainers-advanced-imagebuilder-dummy-app" -am -T2C -Dmaven.test.skip'
 
 RUN echo "Executing '$mvncmd'"
 RUN chmod +x ./mvnw \
@@ -48,6 +48,6 @@ EXPOSE 8080
 
 USER ${user}
 
-COPY --from=build-env --chown=${user}:${group} build/testcontainers-java-advanced-imagebuilder-dummy-app/target/dummy-app.jar ${APP_DIR}/dummy-app.jar
+COPY --from=build-env --chown=${user}:${group} build/testcontainers-advanced-imagebuilder-dummy-app/target/dummy-app.jar ${APP_DIR}/dummy-app.jar
 
 CMD java $JAVA_OPTS -jar /opt/dummy-app/dummy-app.jar

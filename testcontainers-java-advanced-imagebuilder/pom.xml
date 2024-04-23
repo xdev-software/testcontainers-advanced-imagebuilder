@@ -5,17 +5,17 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>software.xdev</groupId>
-	<artifactId>testcontainers-java-advanced-imagebuilder</artifactId>
+	<artifactId>testcontainers-advanced-imagebuilder</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>testcontainers-java-advanced-imagebuilder</name>
-	<description>testcontainers-java-advanced-imagebuilder</description>
-	<url>https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder</url>
+	<name>testcontainers-advanced-imagebuilder</name>
+	<description>testcontainers-advanced-imagebuilder</description>
+	<url>https://github.com/xdev-software/testcontainers-advanced-imagebuilder</url>
 
 	<scm>
-		<url>https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder</url>
-		<connection>scm:git:https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder.git</connection>
+		<url>https://github.com/xdev-software/testcontainers-advanced-imagebuilder</url>
+		<connection>scm:git:https://github.com/xdev-software/testcontainers-advanced-imagebuilder.git</connection>
 	</scm>
 
 	<inceptionYear>2024</inceptionYear>

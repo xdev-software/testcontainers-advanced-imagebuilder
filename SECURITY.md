@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Please report a security vulnerability [on GitHub Security Advisories](https://github.com/xdev-software/testcontainers-java-advanced-imagebuilder/security/advisories/new).
+Please report a security vulnerability [on GitHub Security Advisories](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/security/advisories/new).
