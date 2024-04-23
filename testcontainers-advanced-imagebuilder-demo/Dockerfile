@@ -1,5 +1,6 @@
 # Stage 1: Build the dummy app
-FROM eclipse-temurin:21-jdk-alpine AS build-env
+ARG JAVA_VERSION=21
+FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
 
 RUN apk add --no-cache git
 
