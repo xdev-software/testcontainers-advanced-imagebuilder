@@ -67,11 +67,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
  * <ul>
  * 	<li><a href="https://github.com/testcontainers/testcontainers-java/issues/3093">testcontainers-java#3093</a></li>
  * 	<li><a href="https://github.com/testcontainers/testcontainers-java/issues/3238">testcontainers-java#3238</a></li>
- * 	<li>
- * 	    Testcontainers internal .dockerignore processor is completely broken: slow (needs ~30s) and misses files -
- * 	    Use own/.gitignore processor (still not perfect but doesn't miss files and runs within 5s).
- * 	    See {@link TransferFilesCreator} for details.
- * 	</li>
+ * 	<li>{@link TransferFilesCreator}</li>
  * 	<li>Fixed: Logger was not controllable (because it was generic)</li>
  *  <li>Deprecated-Stuff replaced / removed</li>
  * </ul>
