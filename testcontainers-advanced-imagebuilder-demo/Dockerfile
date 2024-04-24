@@ -28,7 +28,7 @@ ARG mvncmd='clean package -pl "testcontainers-advanced-imagebuilder-dummy-app" -
 
 RUN echo "Executing '$mvncmd'"
 RUN chmod +x ./mvnw \
-  && ./mvnw -B $mvncmd
+  && ./mvnw -B ${mvncmd}
 
 # Stage 2: Build the executable image
 FROM eclipse-temurin:21-jre-alpine
@@ -40,8 +40,8 @@ ARG gid=1000
 ARG APP_DIR=/opt/dummy-app
 
 # Create user + group + home
-RUN mkdir -p $APP_DIR \
-  && chown ${uid}:${gid} $APP_DIR \
+RUN mkdir -p ${APP_DIR} \
+  && chown ${uid}:${gid} ${APP_DIR} \
   && addgroup -g ${gid} ${group} \
   && adduser -h "$APP_DIR" -u ${uid} -G ${group} -s /bin/bash -D ${user}
 
@@ -51,4 +51,4 @@ USER ${user}
 
 COPY --from=build-env --chown=${user}:${group} build/testcontainers-advanced-imagebuilder-dummy-app/target/dummy-app.jar ${APP_DIR}/dummy-app.jar
 
-CMD java $JAVA_OPTS -jar /opt/dummy-app/dummy-app.jar
+CMD java ${JAVA_OPTS} -jar /opt/dummy-app/dummy-app.jar

@@ -85,7 +85,7 @@ public class AdvancedImageFromDockerFile
 	StringsTrait<AdvancedImageFromDockerFile>,
 	DockerfileTrait<AdvancedImageFromDockerFile>
 {
-	protected static final Logger LOG = LoggerFactory.getLogger(AdvancedImageFromDockerFile.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(AdvancedImageFromDockerFile.class);
 	protected final String dockerImageName;
 	
 	protected final boolean deleteOnExit;
@@ -406,7 +406,7 @@ public class AdvancedImageFromDockerFile
 	
 	protected Logger log()
 	{
-		return LOG;
+		return LOGGER;
 	}
 	
 	public AdvancedImageFromDockerFile withBuildArg(final String key, final String value)
