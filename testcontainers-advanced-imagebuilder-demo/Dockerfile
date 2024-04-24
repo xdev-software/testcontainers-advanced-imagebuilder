@@ -31,7 +31,7 @@ RUN chmod +x ./mvnw \
   && ./mvnw -B $mvncmd
 
 # Stage 2: Build the executable image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:22-jre-alpine
 
 ARG user=dummy-app
 ARG group=dummy-app
