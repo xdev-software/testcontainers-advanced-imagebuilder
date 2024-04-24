@@ -85,7 +85,7 @@ public class AdvancedImageFromDockerFile
 	StringsTrait<AdvancedImageFromDockerFile>,
 	DockerfileTrait<AdvancedImageFromDockerFile>
 {
-	protected static final Logger LOG = LoggerFactory.getLogger(AdvancedImageFromDockerFile.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(AdvancedImageFromDockerFile.class);
 	protected final String dockerImageName;
 	
 	protected final boolean deleteOnExit;
@@ -149,12 +149,6 @@ public class AdvancedImageFromDockerFile
 		
 		try
 		{
-			if(this.deleteOnExit)
-			{
-				this.log().info("Registering image for cleanup when tests are finished");
-				ResourceReaper.instance().registerImageForCleanup(this.dockerImageName);
-			}
-			
 			// We have to use pipes to avoid high memory consumption since users might want to build huge images
 			final PipedInputStream in = new PipedInputStream();
 			final PipedOutputStream out = new PipedOutputStream(in);
@@ -168,6 +162,7 @@ public class AdvancedImageFromDockerFile
 			{
 				labels.putAll(buildImageCmd.getLabels());
 			}
+			this.deleteImageOnExitIfRequired(labels);
 			labels.putAll(DockerClientFactory.DEFAULT_LABELS);
 			buildImageCmd.withLabels(labels);
 			
@@ -207,6 +202,18 @@ public class AdvancedImageFromDockerFile
 		{
 			throw new UncheckedIOException(e);
 		}
+	}
+	
+	@SuppressWarnings("deprecation") // There is no alternative and it's also used in the default implementation
+	protected void deleteImageOnExitIfRequired(final Map<String, String> labels)
+	{
+		if(!this.deleteOnExit)
+		{
+			return;
+		}
+		
+		this.log().debug("Registering image for cleanup when finished");
+		labels.putAll(ResourceReaper.instance().getLabels());
 	}
 	
 	protected long getBytesToDockerDaemon(final PipedOutputStream out) throws IOException
@@ -406,7 +413,7 @@ public class AdvancedImageFromDockerFile
 	
 	protected Logger log()
 	{
-		return LOG;
+		return LOGGER;
 	}
 	
 	public AdvancedImageFromDockerFile withBuildArg(final String key, final String value)
