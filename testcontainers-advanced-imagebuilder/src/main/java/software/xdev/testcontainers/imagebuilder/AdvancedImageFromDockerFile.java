@@ -75,7 +75,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
  * @author AB
  * @see org.testcontainers.images.builder.ImageFromDockerfile
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "PMD.GodClass"})
 public class AdvancedImageFromDockerFile
 	extends LazyFuture<String>
 	implements
@@ -237,7 +237,7 @@ public class AdvancedImageFromDockerFile
 		return bytesToDockerDaemon;
 	}
 	
-	@SuppressWarnings("java:S3776") // 30 LoC are not that hard to read...
+	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"}) // 30 LoC are not that hard to read...
 	protected BuildImageResultCallback getBuildImageResultCallback(final Logger logger)
 	{
 		return new BuildImageResultCallback()
