@@ -4,7 +4,7 @@
   "packageRules": [
     {
       "description": "Ignore project internal dependencies",
-      "packagePattern": "^software.xdev:testcontainers-advanced-imagebuilder ",
+      "packagePattern": "^software.xdev:testcontainers-advanced-imagebuilder",
       "datasources": [
         "maven"
       ],
