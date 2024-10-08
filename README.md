@@ -10,10 +10,10 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Brings a custom [build-context](https://docs.docker.com/build/building/context/) processor
   * Works more efficient and reliable than the default implementation (however likely still not perfect)
   * uses ``.gitignore`` if available
-  * Allows to adding custom ignores
+  * Allows adding custom ignores
     * This way the build-context can be fine tuned in a way that the build cache works very efficiently (e.g. only re-built when actual code that matters changes)
 * Makes logger non generic and therefore controllable
-* Cleaned up some code
+* Did some general code cleanup
 
 A common use case - that can also be seen [inside the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java) - is for creating an image - used in e.g. Integration tests - for an application that is also inside the same repo.
 
