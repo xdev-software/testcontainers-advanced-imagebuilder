@@ -98,7 +98,7 @@ public class AdvancedImageFromDockerFile
 	protected List<String> additionalIgnoreLines = new ArrayList<>();
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
-	protected Set<String> dependencyImageNames = Collections.emptySet();
+	protected Set<String> externalDependencyImageNames = Collections.emptySet();
 	
 	@SuppressWarnings("checkstyle:MagicNumber")
 	public AdvancedImageFromDockerFile()
@@ -166,7 +166,7 @@ public class AdvancedImageFromDockerFile
 			labels.putAll(DockerClientFactory.DEFAULT_LABELS);
 			buildImageCmd.withLabels(labels);
 			
-			this.prePullDependencyImages(this.dependencyImageNames);
+			this.prePullDependencyImages(this.externalDependencyImageNames);
 			
 			this.log().info("Starting building image[name='{}']", this.dockerImageName);
 			final long buildStartTime = System.currentTimeMillis();
@@ -303,11 +303,11 @@ public class AdvancedImageFromDockerFile
 			final AdvancedParsedDockerfile parsedDockerFile = new AdvancedParsedDockerfile(p);
 			
 			this.log().info("Resolving dependency images...");
-			this.dependencyImageNames = this.fullyResolveDependencyImages(
-				parsedDockerFile.getDependencyImageNames(),
+			this.externalDependencyImageNames = this.fullyResolveDependencyImages(
+				parsedDockerFile.getExternalImageNames(),
 				parsedDockerFile.getArguments());
 			
-			if(!this.dependencyImageNames.isEmpty())
+			if(!this.externalDependencyImageNames.isEmpty())
 			{
 				// if we'll be pre-pulling images, disable the built-in pull as it is not necessary and will fail for
 				// authenticated registries
@@ -489,9 +489,9 @@ public class AdvancedImageFromDockerFile
 		return this.deleteOnExit;
 	}
 	
-	public Set<String> getDependencyImageNames()
+	public Set<String> getExternalDependencyImageNames()
 	{
-		return this.dependencyImageNames;
+		return this.externalDependencyImageNames;
 	}
 	
 	public String getDockerImageName()
