@@ -12,6 +12,7 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
   * uses ``.gitignore`` if available
   * Allows adding custom ignores
     * This way the build-context can be fine tuned in a way that the build cache works very efficiently (e.g. only re-built when actual code that matters changes)
+* Do not pull images that are declared inside the Dockerfile
 * Makes logger non generic and therefore controllable
 * Did some general code cleanup
 
