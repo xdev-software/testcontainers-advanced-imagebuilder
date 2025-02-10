@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<licensePluginReport goal="FORMAT" timestamp="1739182985157">
+    <module artifactId="testcontainers-advanced-imagebuilder" groupId="software.xdev" version="1.0.2"/>
+    <files>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/AdvancedImageFromDockerFile.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/AdvancedParsedDockerfile.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/TransferFilesCreator.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/testcontainers/imagebuilder/AdvancedImageFromDockerfileTest.java" result="NOOP"/>
+    </files>
+</licensePluginReport>
