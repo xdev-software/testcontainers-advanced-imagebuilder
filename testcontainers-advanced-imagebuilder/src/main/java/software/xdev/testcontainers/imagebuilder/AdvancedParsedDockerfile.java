@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -49,11 +50,15 @@ public class AdvancedParsedDockerfile
 	private static final Logger LOG = LoggerFactory.getLogger(AdvancedParsedDockerfile.class);
 	
 	protected static final Pattern FROM_LINE_PATTERN =
-		Pattern.compile("FROM (?<arg>--[^\\s]+\\s)*(?<image>[^\\s]+).*", Pattern.CASE_INSENSITIVE);
+		Pattern.compile(
+			"FROM (?<arg>--\\S+\\s)*(?<image>\\S+)(?:\\s+AS\\s+(?<as>\\S+))?.*",
+			Pattern.CASE_INSENSITIVE);
 	
 	protected final Path dockerFilePath;
 	
 	protected Set<String> dependencyImageNames = Collections.emptySet();
+	protected Set<String> internalDependencyImageNames = Collections.emptySet();
+	protected Set<String> externalImageNames = Collections.emptySet();
 	protected final Map<String, Optional<String>> arguments = new HashMap<>();
 	
 	public AdvancedParsedDockerfile(final Path dockerFilePath)
@@ -83,10 +88,13 @@ public class AdvancedParsedDockerfile
 	
 	protected void parse(final List<String> lines)
 	{
-		// FROM
-		this.dependencyImageNames = lines.stream()
+		final List<Matcher> matchedFromLines = lines.stream()
 			.map(FROM_LINE_PATTERN::matcher)
 			.filter(Matcher::matches)
+			.toList();
+		
+		// FROM
+		this.dependencyImageNames = matchedFromLines.stream()
 			.map(matcher -> matcher.group("image"))
 			.collect(Collectors.toSet());
 		
@@ -94,6 +102,23 @@ public class AdvancedParsedDockerfile
 		{
 			LOG.debug("Found dependency images in Dockerfile {}: {}", this.dockerFilePath, this.dependencyImageNames);
 		}
+		
+		this.internalDependencyImageNames = matchedFromLines.stream()
+			.map(m -> m.group("as"))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
+		
+		if(!this.internalDependencyImageNames.isEmpty())
+		{
+			LOG.debug(
+				"Found internal dependency images in Dockerfile {}: {}",
+				this.dockerFilePath,
+				this.internalDependencyImageNames);
+		}
+		
+		this.externalImageNames = this.dependencyImageNames.stream()
+			.filter(i -> !this.internalDependencyImageNames.contains(i))
+			.collect(Collectors.toSet());
 		
 		// ARG
 		final Properties properties = new Properties();
@@ -127,6 +152,16 @@ public class AdvancedParsedDockerfile
 	public Set<String> getDependencyImageNames()
 	{
 		return this.dependencyImageNames;
+	}
+	
+	public Set<String> getInternalDependencyImageNames()
+	{
+		return this.internalDependencyImageNames;
+	}
+	
+	public Set<String> getExternalImageNames()
+	{
+		return this.externalImageNames;
 	}
 	
 	public Map<String, Optional<String>> getArguments()

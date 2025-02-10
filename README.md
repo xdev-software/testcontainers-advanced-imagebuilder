@@ -1,5 +1,5 @@
 [![Latest version](https://img.shields.io/maven-central/v/software.xdev/testcontainers-advanced-imagebuilder?logo=apache%20maven)](https://mvnrepository.com/artifact/software.xdev/testcontainers-advanced-imagebuilder)
-[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/testcontainers-advanced-imagebuilder/checkBuild.yml?branch=develop)](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/actions/workflows/checkBuild.yml?query=branch%3Adevelop)
+[![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/testcontainers-advanced-imagebuilder/check-build.yml?branch=develop)](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/actions/workflows/check-build.yml?query=branch%3Adevelop)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_testcontainers-advanced-imagebuilder&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_testcontainers-advanced-imagebuilder)
 
 # Advanced Image-Builder for Testcontainers Java
@@ -10,10 +10,11 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Brings a custom [build-context](https://docs.docker.com/build/building/context/) processor
   * Works more efficient and reliable than the default implementation (however likely still not perfect)
   * uses ``.gitignore`` if available
-  * Allows to adding custom ignores
+  * Allows adding custom ignores
     * This way the build-context can be fine tuned in a way that the build cache works very efficiently (e.g. only re-built when actual code that matters changes)
+* Do not pull images that are declared inside the Dockerfile
 * Makes logger non generic and therefore controllable
-* Cleaned up some code
+* Did some general code cleanup
 
 A common use case - that can also be seen [inside the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java) - is for creating an image - used in e.g. Integration tests - for an application that is also inside the same repo.
 
