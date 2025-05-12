@@ -9,7 +9,7 @@ import software.xdev.testcontainers.imagebuilder.AdvancedImageFromDockerFile;
 
 public final class Application
 {
-	@SuppressWarnings("java:S106")
+	@SuppressWarnings({"java:S106", "PMD.SystemPrintln"}) // Just a demo
 	public static void main(final String[] args)
 	{
 		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built")
