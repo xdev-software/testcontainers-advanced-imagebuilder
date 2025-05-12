@@ -75,7 +75,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
  * @author AB
  * @see org.testcontainers.images.builder.ImageFromDockerfile
  */
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "PMD.GodClass"})
+@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "PMD.GodClass", "PMD.MoreThanOneLogger"})
 public class AdvancedImageFromDockerFile
 	extends LazyFuture<String>
 	implements
