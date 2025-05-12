@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 class AdvancedImageFromDockerfileTest
 {
+	// Not it can't be written as a method reference (same method name)
+	@SuppressWarnings({"java:S1612", "PMD.LambdaCanBeMethodReference"})
 	@Test
 	void simpleCheck()
 	{
