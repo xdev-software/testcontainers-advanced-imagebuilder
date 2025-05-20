@@ -1,3 +1,6 @@
+# 1.1.1
+* Migrated deployment to _Sonatype Maven Central Portal_ [#155](https://github.com/xdev-software/standard-maven-template/issues/155)
+
 # 1.1.0
 * Remove testcontainer's dependency [onto JUnit 4](https://github.com/xdev-software/testcontainers-junit4-mock/?tab=readme-ov-file)
 * Updated dependencies
