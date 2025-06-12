@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -96,6 +97,8 @@ public class AdvancedImageFromDockerFile
 	protected Optional<Path> baseDir = Optional.empty();
 	protected Optional<Path> baseDirRelativeIgnoreFile = Optional.of(Paths.get(".gitignore"));
 	protected List<String> additionalIgnoreLines = new ArrayList<>();
+	protected boolean alwaysTransferDockerfilePath = true;
+	protected Set<Path> alwaysTransferPaths = Set.of();
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected Set<String> externalDependencyImageNames = Collections.emptySet();
@@ -326,7 +329,16 @@ public class AdvancedImageFromDockerFile
 			final TransferFilesCreator tfc =
 				new TransferFilesCreator(this.baseDir.get(), this.baseDirRelativeIgnoreFile.orElse(null));
 			
-			final List<Path> filesToTransfer = tfc.getFilesToTransfer(this.additionalIgnoreLines);
+			final Set<Path> alwaysIncludePaths = new HashSet<>(this.alwaysTransferPaths);
+			if(this.alwaysTransferDockerfilePath)
+			{
+				final Path determinedDockerfilePath = this.dockerFilePath.orElse(Path.of("Dockerfile"));
+				alwaysIncludePaths.add(this.baseDir
+					.map(basePath -> basePath.relativize(determinedDockerfilePath))
+					.orElse(determinedDockerfilePath));
+			}
+			
+			final List<Path> filesToTransfer = tfc.getFilesToTransfer(this.additionalIgnoreLines, alwaysIncludePaths);
 			
 			this.log().info("{}x files will be transferred", filesToTransfer.size());
 			if(this.log().isDebugEnabled())
@@ -469,6 +481,18 @@ public class AdvancedImageFromDockerFile
 	public AdvancedImageFromDockerFile withAdditionalIgnoreLines(final String... additionalIgnoreLines)
 	{
 		this.additionalIgnoreLines = Arrays.asList(additionalIgnoreLines);
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withAlwaysTransferPaths(final Set<Path> alwaysTransferPaths)
+	{
+		this.alwaysTransferPaths = new HashSet<>(Objects.requireNonNull(alwaysTransferPaths));
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withAlwaysTransferDockerfilePath(final boolean alwaysTransferDockerfilePath)
+	{
+		this.alwaysTransferDockerfilePath = alwaysTransferDockerfilePath;
 		return this;
 	}
 	
