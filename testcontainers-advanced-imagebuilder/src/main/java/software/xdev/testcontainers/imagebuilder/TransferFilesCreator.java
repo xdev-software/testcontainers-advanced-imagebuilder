@@ -54,13 +54,17 @@ public class TransferFilesCreator
 	private final Path baseDir;
 	private final Path ignoreFileRelativeToBaseDir;
 	
-	public TransferFilesCreator(final Path baseDir, final Path ignoreFileRelativeToBaseDir)
+	public TransferFilesCreator(
+		final Path baseDir,
+		final Path ignoreFileRelativeToBaseDir)
 	{
 		this.baseDir = Objects.requireNonNull(baseDir);
 		this.ignoreFileRelativeToBaseDir = ignoreFileRelativeToBaseDir;
 	}
 	
-	public List<Path> getFilesToTransfer(final Collection<String> additionalIgnoreLines)
+	public List<Path> getFilesToTransfer(
+		final Collection<String> additionalIgnoreLines,
+		final Set<Path> alwaysIncludePaths)
 	{
 		try
 		{
@@ -76,7 +80,7 @@ public class TransferFilesCreator
 				.map(s -> FileSystems.getDefault().getPathMatcher("glob:" + s))
 				.toList();
 			
-			return this.walkFilesAndDetermineTransfer(ignoreMatchers);
+			return this.walkFilesAndDetermineTransfer(ignoreMatchers, alwaysIncludePaths);
 		}
 		catch(final IOException ioe)
 		{
@@ -115,15 +119,22 @@ public class TransferFilesCreator
 			.toList();
 	}
 	
-	protected List<Path> walkFilesAndDetermineTransfer(final List<PathMatcher> ignoreMatchers) throws IOException
+	protected List<Path> walkFilesAndDetermineTransfer(
+		final List<PathMatcher> ignoreMatchers,
+		final Set<Path> alwaysIncludePaths) throws IOException
 	{
 		try(final Stream<Path> walk = Files.walk(this.baseDir))
 		{
 			return walk
 				.filter(Files::isRegularFile)
 				.filter(file -> {
-					final Path relativePath = Paths.get("/").resolve(this.baseDir.relativize(file));
-					return ignoreMatchers.stream().noneMatch(m -> m.matches(relativePath));
+					final Path relativePath = this.baseDir.relativize(file);
+					if(alwaysIncludePaths.contains(relativePath))
+					{
+						return true;
+					}
+					final Path rootRelativePath = Paths.get("/").resolve(relativePath);
+					return ignoreMatchers.stream().noneMatch(m -> m.matches(rootRelativePath));
 				})
 				.toList();
 		}
