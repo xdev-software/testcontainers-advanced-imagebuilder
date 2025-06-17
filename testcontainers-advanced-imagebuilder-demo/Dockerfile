@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1-labs
 # Stage 1: Build the dummy app
 ARG JAVA_VERSION=21
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env

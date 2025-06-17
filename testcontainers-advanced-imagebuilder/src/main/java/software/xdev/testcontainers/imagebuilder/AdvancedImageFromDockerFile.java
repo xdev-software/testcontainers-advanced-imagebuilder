@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +43,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy;
+import org.testcontainers.dockerclient.TransportConfig;
 import org.testcontainers.images.RemoteDockerImage;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.traits.BuildContextBuilderTrait;
@@ -58,9 +62,13 @@ import org.testcontainers.utility.LazyFuture;
 import org.testcontainers.utility.ResourceReaper;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.command.BuildImageV2Cmd;
+import com.github.dockerjava.api.command.BuildImageV2ResultCallback;
+import com.github.dockerjava.api.model.BuildResponseV2Item;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.core.RemoteApiVersion;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 
 /**
@@ -100,7 +108,7 @@ public class AdvancedImageFromDockerFile
 	protected boolean alwaysTransferDockerfilePath = true;
 	protected Set<Path> alwaysTransferPaths = Set.of();
 	protected Optional<String> target = Optional.empty();
-	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
+	protected final Set<Consumer<BuildImageV2Cmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected Set<String> externalDependencyImageNames = Collections.emptySet();
 	
 	@SuppressWarnings("checkstyle:MagicNumber")
@@ -146,7 +154,16 @@ public class AdvancedImageFromDockerFile
 		final Logger logger = Optional.ofNullable(this.loggerForBuild)
 			.orElseGet(() -> DockerLoggerFactory.getLogger(this.dockerImageName));
 		
-		final DockerClient dockerClient = DockerClientFactory.instance().client();
+		final TransportConfig transportConfig = new NpipeSocketClientProviderStrategy().getTransportConfig();
+		final DockerClient dockerClient = DockerClientImpl.getInstance(
+			DefaultDockerClientConfig.createDefaultConfigBuilder()
+				.withApiVersion(RemoteApiVersion.create(1, 44))
+				.build(),
+			new ZerodepDockerHttpClient.Builder()
+				.dockerHost(transportConfig.getDockerHost())
+				.sslConfig(transportConfig.getSslConfig())
+				.build()
+		); // FIXME: TESTCONTAINERS SHADES
 		
 		this.log().info("Starting resolving image[name='{}']", this.dockerImageName);
 		
@@ -156,7 +173,9 @@ public class AdvancedImageFromDockerFile
 			final PipedInputStream in = new PipedInputStream();
 			final PipedOutputStream out = new PipedOutputStream(in);
 			
-			final BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(in);
+			final BuildImageV2Cmd buildImageCmd = dockerClient.buildImageV2Cmd(in)
+				.withOutputs("[{\"type\": \"docker\"}]")
+				.withVersion("2");
 			
 			this.configure(buildImageCmd);
 			
@@ -174,7 +193,7 @@ public class AdvancedImageFromDockerFile
 			this.log().info("Starting building image[name='{}']", this.dockerImageName);
 			final long buildStartTime = System.currentTimeMillis();
 			
-			final BuildImageResultCallback exec = buildImageCmd.exec(this.getBuildImageResultCallback(logger));
+			final BuildImageV2ResultCallback exec = buildImageCmd.exec(this.getBuildImageResultCallback(logger));
 			
 			final long bytesToDockerDaemon = this.getBytesToDockerDaemon(out);
 			
@@ -241,16 +260,25 @@ public class AdvancedImageFromDockerFile
 	}
 	
 	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"}) // 30 LoC are not that hard to read...
-	protected BuildImageResultCallback getBuildImageResultCallback(final Logger logger)
+	protected BuildImageV2ResultCallback getBuildImageResultCallback(final Logger logger)
 	{
-		return new BuildImageResultCallback()
+		return new BuildImageV2ResultCallback()
 		{
 			private final List<String> notFlushedString = new ArrayList<>();
 			
 			@Override
-			public void onNext(final BuildResponseItem item)
+			public void onNext(final BuildResponseV2Item item)
 			{
 				super.onNext(item);
+				
+				if(item.getAux() instanceof final String s)
+				{
+					System.out.println(
+						new String(
+							Base64.getDecoder().decode(s.getBytes(StandardCharsets.US_ASCII)),
+							StandardCharsets.US_ASCII
+						));
+				}
 				
 				if(item.isErrorIndicated())
 				{
@@ -295,7 +323,7 @@ public class AdvancedImageFromDockerFile
 		return str;
 	}
 	
-	protected void configure(final BuildImageCmd buildImageCmd)
+	protected void configure(final BuildImageV2Cmd buildImageCmd)
 	{
 		this.log().info("Configuring...");
 		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.getDockerImageName())));
@@ -502,7 +530,7 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
-	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageCmd> modifier)
+	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageV2Cmd> modifier)
 	{
 		this.buildImageCmdModifiers.add(modifier);
 		return this;
