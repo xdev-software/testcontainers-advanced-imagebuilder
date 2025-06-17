@@ -49,7 +49,7 @@ class AdvancedImageFromDockerfileTest
 			Assumptions.abort("Failed to find docker environment: " + iex.getMessage());
 		}
 		
-		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built")
+		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built", false)
 			.withLoggerForBuild(LoggerFactory.getLogger("container.build"))
 			.withDockerFilePath(Paths.get("../testcontainers-advanced-imagebuilder-demo/Dockerfile"))
 			.withBaseDir(Paths.get("../"))
@@ -68,7 +68,7 @@ class AdvancedImageFromDockerfileTest
 					"testcontainers-advanced-imagebuilder/**",
 					"testcontainers-advanced-imagebuilder-demo/**"
 				)
-				.withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
+				// .withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
 				// Only copy the required maven modules and remove the not required ones
 				.withTransferArchiveTARCompressorCustomizer(c -> c.withContentModifier(
 					new FileLinesContentModifier()

@@ -50,6 +50,8 @@ import org.apache.commons.lang3.function.TriFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy;
+import org.testcontainers.dockerclient.TransportConfig;
 import org.testcontainers.images.RemoteDockerImage;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.traits.BuildContextBuilderTrait;
@@ -65,8 +67,12 @@ import org.testcontainers.utility.LazyFuture;
 import org.testcontainers.utility.ResourceReaper;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
+import com.github.dockerjava.api.command.BuildImageV2Cmd;
+import com.github.dockerjava.api.command.BuildImageV2ResultCallback;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.core.RemoteApiVersion;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 import software.xdev.testcontainers.imagebuilder.concurrent.ImageBuilderExecutorServiceHolder;
 import software.xdev.testcontainers.imagebuilder.log.LoggingBuildImageResultCallback;
@@ -112,7 +118,7 @@ public class AdvancedImageFromDockerFile
 	protected Optional<Path> optDockerFilePath = Optional.empty();
 	protected Optional<Path> optBaseDir = Optional.empty();
 	protected Optional<String> target = Optional.empty();
-	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
+	protected final Set<Consumer<BuildImageV2Cmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected boolean disablePull;
 	
 	protected FilesToTransferHandler filesToTransferHandler = new FilesToTransferHandler();
@@ -153,8 +159,16 @@ public class AdvancedImageFromDockerFile
 		final Logger logger = Optional.ofNullable(this.loggerForBuild)
 			.orElseGet(() -> DockerLoggerFactory.getLogger(this.dockerImageName));
 		
-		@SuppressWarnings("resource")
-		final DockerClient dockerClient = DockerClientFactory.instance().client();
+		final TransportConfig transportConfig = new NpipeSocketClientProviderStrategy().getTransportConfig();
+		final DockerClient dockerClient = DockerClientImpl.getInstance(
+			DefaultDockerClientConfig.createDefaultConfigBuilder()
+				.withApiVersion(RemoteApiVersion.create(1, 44))
+				.build(),
+			new ZerodepDockerHttpClient.Builder()
+				.dockerHost(transportConfig.getDockerHost())
+				.sslConfig(transportConfig.getSslConfig())
+				.build()
+		); // FIXME: TESTCONTAINERS SHADES
 		
 		this.log().info("Starting resolving image[name='{}']", this.dockerImageName);
 		
@@ -164,7 +178,9 @@ public class AdvancedImageFromDockerFile
 			final PipedInputStream in = new PipedInputStream();
 			final PipedOutputStream out = new PipedOutputStream(in);
 			
-			final BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(in);
+			final BuildImageV2Cmd buildImageCmd = dockerClient.buildImageV2Cmd(in)
+				.withOutputs("[{\"type\": \"moby\",\"Attrs\":{\"type\":\"docker\"}}]")
+				.withVersion("2");
 			
 			final ConfigurationState configurationState = this.configure(buildImageCmd);
 			
@@ -185,7 +201,7 @@ public class AdvancedImageFromDockerFile
 			this.log().info("Starting building image[name='{}']", this.dockerImageName);
 			final long buildStartTime = System.currentTimeMillis();
 			
-			final BuildImageResultCallback exec = buildImageCmd.exec(this.getBuildImageResultCallback(logger));
+			final BuildImageV2ResultCallback exec = buildImageCmd.exec(this.getBuildImageResultCallback(logger));
 			
 			final long bytesToDockerDaemon = this.getBytesToDockerDaemon(out);
 			
@@ -244,12 +260,12 @@ public class AdvancedImageFromDockerFile
 		return bytesToDockerDaemon;
 	}
 	
-	protected BuildImageResultCallback getBuildImageResultCallback(final Logger logger)
+	protected BuildImageV2ResultCallback getBuildImageResultCallback(final Logger logger)
 	{
 		return new LoggingBuildImageResultCallback(logger);
 	}
 	
-	protected ConfigurationState configure(final BuildImageCmd buildImageCmd)
+	protected ConfigurationState configure(final BuildImageV2Cmd buildImageCmd)
 	{
 		this.log().info("Configuring...");
 		
@@ -298,7 +314,7 @@ public class AdvancedImageFromDockerFile
 	}
 	
 	protected void prepareImagePull(
-		final BuildImageCmd buildImageCmd,
+		final BuildImageV2Cmd buildImageCmd,
 		final Path dockerFile,
 		final ConfigurationState state)
 	{
@@ -552,13 +568,13 @@ public class AdvancedImageFromDockerFile
 	}
 	
 	public AdvancedImageFromDockerFile withBuildImageCmdModifiers(
-		final Collection<Consumer<BuildImageCmd>> modifiers)
+		final Collection<Consumer<BuildImageV2Cmd>> modifiers)
 	{
 		this.buildImageCmdModifiers.addAll(modifiers);
 		return this;
 	}
 	
-	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageCmd> modifier)
+	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageV2Cmd> modifier)
 	{
 		this.buildImageCmdModifiers.add(modifier);
 		return this;

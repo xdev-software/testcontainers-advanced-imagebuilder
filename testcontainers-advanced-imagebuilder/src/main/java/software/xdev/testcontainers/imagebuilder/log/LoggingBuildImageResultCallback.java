@@ -16,15 +16,16 @@
 package software.xdev.testcontainers.imagebuilder.log;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import org.slf4j.Logger;
 
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.command.BuildImageV2ResultCallback;
+import com.github.dockerjava.api.model.BuildResponseV2Item;
 
 
-public class LoggingBuildImageResultCallback extends BuildImageResultCallback
+public class LoggingBuildImageResultCallback extends BuildImageV2ResultCallback
 {
 	protected final Logger logger;
 	protected final List<String> notFlushedString;
@@ -41,9 +42,13 @@ public class LoggingBuildImageResultCallback extends BuildImageResultCallback
 	}
 	
 	@Override
-	public void onNext(final BuildResponseItem item)
+	public void onNext(final BuildResponseV2Item item)
 	{
 		super.onNext(item);
+		if(item.getAux() instanceof final String auxStr)
+		{
+			this.logger.info(new String(Base64.getDecoder().decode(auxStr)));
+		}
 		
 		if(item.isErrorIndicated())
 		{
