@@ -25,7 +25,37 @@ import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier
 
 
 /**
- * Emulates <a href="https://docs.docker.com/reference/dockerfile/#copy---parents">COPY --parents</a>
+ * Emulates <a href="https://docs.docker.com/reference/dockerfile/#copy---parents">COPY --parents</a>.
+ * <p>
+ * This flag currently (as of 2025-06) requires an experimental version of the Dockerfile syntax,
+ * which can only used with BuildKit.
+ * </p>
+ * <p>
+ * BuildKit is not available due to multiple problems:
+ * <ul>
+ *     <li>
+ *         Missing in testcontainers:
+ *         <a href="https://github.com/testcontainers/testcontainers-java/issues/2857">testcontainers-java#2857</a>
+ *     </li>
+ *     <li>
+ *         Missing in upstream docker-java:
+ *         <a href="https://github.com/docker-java/docker-java/issues/2361">docker-java#2361</a>
+ *     </li>
+ *     <li>
+ *         Build API is broken in multiple places:
+ *         <ul>
+ *             <li>
+ *                 Always requires to start a session:
+ *                 <a href="https://github.com/moby/moby/issues/48112">moby#48112</a>
+ *             </li>
+ *             <li>
+ *                 Does not expose BuildKit exporters:
+ *                 <a href="https://github.com/moby/moby/issues/50216">moby#50216</a>
+ *             </li>
+ *         </ul>
+ *     </li>
+ * </ul>
+ * </p>
  */
 @SuppressWarnings("java:S1075")
 public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
