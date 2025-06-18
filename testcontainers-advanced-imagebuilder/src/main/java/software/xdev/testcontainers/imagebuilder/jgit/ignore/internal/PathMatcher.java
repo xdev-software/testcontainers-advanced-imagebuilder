@@ -134,6 +134,7 @@ public class PathMatcher extends AbstractMatcher
 	 * @param pattern non null
 	 * @return trimmed pattern
 	 */
+	@SuppressWarnings("checkstyle:FinalParameters")
 	protected static String trim(String pattern)
 	{
 		while(!pattern.isEmpty()
@@ -194,8 +195,10 @@ public class PathMatcher extends AbstractMatcher
 	 * wildcards or single segments (mean: this is multi-segment path which must
 	 * be at the beginning of the another string)
 	 */
+	@SuppressWarnings("checkstyle:FinalParameters")
 	protected boolean simpleMatch(
-		String path, final boolean assumeDirectory,
+		String path,
+		final boolean assumeDirectory,
 		final boolean pathMatch)
 	{
 		final boolean hasSlash = path.indexOf(this.slash) == 0;
