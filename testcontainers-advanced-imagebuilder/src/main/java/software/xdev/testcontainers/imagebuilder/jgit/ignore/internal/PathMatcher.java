@@ -232,6 +232,7 @@ public class PathMatcher extends AbstractMatcher
 			"Path matcher works only on entire paths");
 	}
 	
+	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"})
 	protected boolean iterate(
 		final String path,
 		final int startIncl,

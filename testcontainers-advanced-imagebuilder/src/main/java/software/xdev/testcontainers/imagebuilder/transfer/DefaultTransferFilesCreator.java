@@ -154,6 +154,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		}
 	}
 	
+	@SuppressWarnings("java:S2789")
 	protected Map.Entry<Path, String> determineFileForTransfer(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
@@ -189,6 +190,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		return outcomeDirs;
 	}
 	
+	@SuppressWarnings("java:S2789")
 	protected Map.Entry<Path, String> determineParentDirectoryForTransfer(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
@@ -236,6 +238,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 			: null;
 	}
 	
+	@SuppressWarnings("java:S2789")
 	protected Optional<Map.Entry<Path, String>> shouldIgnore(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
@@ -258,6 +261,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		{
 			return Optional.empty();
 		}
+		// NULL -> Continue
 		return null;
 	}
 	

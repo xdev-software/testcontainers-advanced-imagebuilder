@@ -142,6 +142,7 @@ public final class Strings
 			throw new IllegalStateException(
 				"Pattern must have at least two segments: " + pattern);
 		}
+		
 		final List<String> segments = new ArrayList<>(count);
 		int right = 0;
 		while(true)
@@ -281,32 +282,32 @@ public final class Strings
 			// [:word:]
 		);
 	
-	// Collating symbols [[.a.]] or equivalence class expressions [[=a=]] are
-	// not supported by CLI git (at least not by 1.9.1)
-	static final Pattern UNSUPPORTED = Pattern
-		.compile("\\[\\[[.=]\\w+[.=]\\]\\]");
-	
 	/**
 	 * Conversion from glob to Java regex following two sources:
 	 * <ul>
-	 * <li>http://man7.org/linux/man-pages/man7/glob.7.html
+	 * <li><a href="http://man7.org/linux/man-pages/man7/glob.7.html">Git Glob Man Page</a></li>
 	 * <li>org.eclipse.jgit.fnmatch.FileNameMatcher.java Seems that there are
-	 * various ways to define what "glob" can be.
+	 * various ways to define what "glob" can be.</li>
 	 * </ul>
 	 *
 	 * @param pattern non null pattern
 	 * @return Java regex pattern corresponding to given glob pattern
 	 * @throws InvalidPatternException if pattern is invalid
 	 */
-	@SuppressWarnings({"checkstyle:MethodLength", "checkstyle:MagicNumber"})
-	public static Pattern convertGlob(final String pattern) throws InvalidPatternException
+	@SuppressWarnings({
+		"checkstyle:MethodLength",
+		"checkstyle:MagicNumber",
+		"java:S3776",
+		"PMD.CognitiveComplexity",
+		"PMD.CyclomaticComplexity",
+		"java:S6541"}) // Eclipse code = Big brain required
+	public static Pattern convertGlob(final String pattern)
+		throws InvalidPatternException
 	{
-		if(UNSUPPORTED.matcher(pattern).find())
-		{
-			throw new InvalidPatternException(
-				"Collating symbols [[.a.]] or equivalence class expressions [[=a=]] are not supported",
-				pattern);
-		}
+		// We don't check for unsupported patterns to improve performance
+		// Original comment:
+		// Collating symbols [[.a.]] or equivalence class expressions [[=a=]] are
+		// not supported by CLI git (at least not by 1.9.1)
 		
 		final StringBuilder sb = new StringBuilder(pattern.length());
 		
@@ -322,7 +323,6 @@ public final class Strings
 			final char c = pattern.charAt(i);
 			switch(c)
 			{
-				
 				case '*':
 					if(seenEscape || inBrackets > 0)
 					{
@@ -333,15 +333,7 @@ public final class Strings
 						sb.append('.').append(c);
 					}
 					break;
-				
-				case '(': // fall-through
-				case ')': // fall-through
-				case '{': // fall-through
-				case '}': // fall-through
-				case '+': // fall-through
-				case '$': // fall-through
-				case '^': // fall-through
-				case '|':
+				case '(', ')', '{', '}', '+', '$', '^', '|':
 					if(seenEscape || inBrackets > 0)
 					{
 						sb.append(c);
@@ -351,7 +343,6 @@ public final class Strings
 						sb.append('\\').append(c);
 					}
 					break;
-				
 				case '.':
 					if(seenEscape)
 					{
@@ -359,10 +350,9 @@ public final class Strings
 					}
 					else
 					{
-						sb.append('\\').append('.');
+						sb.append("\\.");
 					}
 					break;
-				
 				case '?':
 					if(seenEscape || inBrackets > 0)
 					{
@@ -373,7 +363,6 @@ public final class Strings
 						sb.append('.');
 					}
 					break;
-				
 				case ':':
 					if(inBrackets > 0
 						&& lookBehind(sb) == '['
@@ -381,10 +370,8 @@ public final class Strings
 					{
 						inCharClass = true;
 					}
-					
 					sb.append(':');
 					break;
-				
 				case '-':
 					if(inBrackets > 0)
 					{
@@ -402,11 +389,10 @@ public final class Strings
 						sb.append('-');
 					}
 					break;
-				
 				case '\\':
+					final char lookAhead = lookAhead(pattern, i);
 					if(inBrackets > 0)
 					{
-						final char lookAhead = lookAhead(pattern, i);
 						if(lookAhead == ']' || lookAhead == '[')
 						{
 							ignoreLastBracket = true;
@@ -414,8 +400,6 @@ public final class Strings
 					}
 					else
 					{
-						//
-						final char lookAhead = lookAhead(pattern, i);
 						if(lookAhead != '\\' && lookAhead != '['
 							&& lookAhead != '?' && lookAhead != '*'
 							&& lookAhead != ' ' && lookBehind(sb) != '\\')
@@ -425,7 +409,6 @@ public final class Strings
 					}
 					sb.append(c);
 					break;
-				
 				case '[':
 					if(inBrackets > 0)
 					{
@@ -446,7 +429,6 @@ public final class Strings
 						sb.append('[');
 					}
 					break;
-				
 				case ']':
 					if(seenEscape)
 					{
@@ -456,7 +438,7 @@ public final class Strings
 					}
 					if(inBrackets <= 0)
 					{
-						sb.append('\\').append(']');
+						sb.append("\\]");
 						ignoreLastBracket = true;
 						break;
 					}
@@ -464,8 +446,7 @@ public final class Strings
 					if(lookBehind == '[' && !ignoreLastBracket
 						|| lookBehind == '^')
 					{
-						sb.append('\\');
-						sb.append(']');
+						sb.append("\\]");
 						ignoreLastBracket = true;
 					}
 					else
@@ -490,7 +471,6 @@ public final class Strings
 						}
 					}
 					break;
-				
 				case '!':
 					if(inBrackets > 0)
 					{
@@ -508,7 +488,6 @@ public final class Strings
 						sb.append(c);
 					}
 					break;
-				
 				default:
 					if(inCharClass)
 					{
@@ -519,10 +498,10 @@ public final class Strings
 						sb.append(c);
 					}
 					break;
-			} // end switch
+			}
 			
 			seenEscape = c == '\\';
-		} // end for
+		}
 		
 		if(inBrackets > 0)
 		{

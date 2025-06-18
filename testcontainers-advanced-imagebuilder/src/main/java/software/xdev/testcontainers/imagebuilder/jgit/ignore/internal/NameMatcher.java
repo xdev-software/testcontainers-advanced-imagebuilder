@@ -51,9 +51,11 @@ public class NameMatcher extends AbstractMatcher
 		}
 	}
 	
+	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"})
 	@Override
 	public boolean matches(
-		final String path, final boolean assumeDirectory,
+		final String path,
+		final boolean assumeDirectory,
 		final boolean pathMatch)
 	{
 		// A NameMatcher's pattern does not contain a slash.
