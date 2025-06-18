@@ -8,10 +8,12 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Allows passing a custom logger to the image build - [testcontainers-java#3093](https://github.com/testcontainers/testcontainers-java/issues/3093)
 * Allows using ``ARG``s for ``FROM`` - [testcontainers-java#3238](https://github.com/testcontainers/testcontainers-java/issues/3238)
 * Brings a custom [build-context](https://docs.docker.com/build/building/context/) processor
-  * Works more efficient and reliable than the default implementation (however likely still not perfect)
+  * Works more efficient and reliable than the default implementation (utilizes [JGit](https://github.com/eclipse-jgit/jgit))
   * uses ``.gitignore`` if available
   * Allows adding custom ignores
     * This way the build-context can be fine tuned in a way that the build cache works very efficiently (e.g. only re-built when actual code that matters changes)
+  * Makes it possible to modify files that are transferred
+* Provide a compatibility layer to emulate [``COPY --parents``](https://docs.docker.com/reference/dockerfile/#copy---parents) (which is currently not supported by Docker out of the box)
 * Do not pull images that are declared inside the Dockerfile
 * Makes logger non generic and therefore controllable
 * Did some general code cleanup
