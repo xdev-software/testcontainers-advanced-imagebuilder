@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +35,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -48,8 +51,8 @@ import org.testcontainers.images.builder.traits.ClasspathTrait;
 import org.testcontainers.images.builder.traits.DockerfileTrait;
 import org.testcontainers.images.builder.traits.FilesTrait;
 import org.testcontainers.images.builder.traits.StringsTrait;
-import org.testcontainers.shaded.com.github.dockerjava.core.util.FilePathUtil;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
+import org.testcontainers.shaded.org.apache.commons.lang3.function.TriFunction;
 import org.testcontainers.utility.Base58;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.DockerLoggerFactory;
@@ -61,6 +64,13 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.model.BuildResponseItem;
+
+import software.xdev.testcontainers.imagebuilder.transfer.DefaultTransferFilesCreator;
+import software.xdev.testcontainers.imagebuilder.transfer.DockerFileContentModifier;
+import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
+import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathUtil;
+import software.xdev.testcontainers.imagebuilder.transfer.TransferArchiveTARCompressor;
+import software.xdev.testcontainers.imagebuilder.transfer.TransferFilesCreator;
 
 
 /**
@@ -96,9 +106,17 @@ public class AdvancedImageFromDockerFile
 	protected Optional<Path> dockerFilePath = Optional.empty();
 	protected Optional<Path> baseDir = Optional.empty();
 	protected Optional<Path> baseDirRelativeIgnoreFile = Optional.of(Paths.get(".gitignore"));
-	protected List<String> additionalIgnoreLines = new ArrayList<>();
+	protected Set<String> preGitIgnoreLines = new LinkedHashSet<>();
+	protected Predicate<String> ignoreFileLineFilter = l -> true;
+	protected Set<String> postGitIgnoreLines = new LinkedHashSet<>();
 	protected boolean alwaysTransferDockerfilePath = true;
-	protected Set<Path> alwaysTransferPaths = Set.of();
+	protected Set<String> alwaysTransferRelativePaths = Set.of();
+	protected BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier =
+		DefaultTransferFilesCreator::new;
+	protected TransferArchiveTARCompressor transferArchiveTARCompressor = new TransferArchiveTARCompressor();
+	protected TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
+		dockerFileContentModifierSupplier = DockerFileContentModifier::new;
+	protected List<DockerFileLineModifier> dockerFileLinesModifiers = new ArrayList<>();
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected Set<String> externalDependencyImageNames = Collections.emptySet();
@@ -123,13 +141,10 @@ public class AdvancedImageFromDockerFile
 	@Override
 	public AdvancedImageFromDockerFile withFileFromTransferable(final String path, final Transferable transferable)
 	{
-		final Transferable oldValue = this.transferables.put(path, transferable);
-		
-		if(oldValue != null)
+		if(this.transferables.put(path, transferable) != null)
 		{
 			this.log().warn("overriding previous mapping for '{}'", path);
 		}
-		
 		return this;
 	}
 	
@@ -182,13 +197,6 @@ public class AdvancedImageFromDockerFile
 			{
 				this.log().info(
 					"Transferred {} manually (not actually) to Docker daemon",
-					FileUtils.byteCountToDisplaySize(bytesToDockerDaemon));
-			}
-			if(this.log().isWarnEnabled() && bytesToDockerDaemon > FileUtils.ONE_MB * 50)
-			{
-				this.log().warn(
-					"A large amount of data was sent to the Docker daemon ({})."
-						+ " Consider using a .dockerignore file for better performance.",
 					FileUtils.byteCountToDisplaySize(bytesToDockerDaemon));
 			}
 			
@@ -298,10 +306,12 @@ public class AdvancedImageFromDockerFile
 	protected void configure(final BuildImageCmd buildImageCmd)
 	{
 		this.log().info("Configuring...");
-		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.getDockerImageName())));
+		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.dockerImageName)));
 		
 		this.dockerFilePath.ifPresent(p -> {
-			buildImageCmd.withDockerfilePath(FilePathUtil.relativize(this.baseDir.orElse(p.getParent()), p));
+			buildImageCmd.withDockerfilePath(FastFilePathUtil.relativize(
+				this.baseDir.orElse(p.getParent()),
+				p));
 			
 			final AdvancedParsedDockerfile parsedDockerFile = new AdvancedParsedDockerfile(p);
 			
@@ -322,33 +332,62 @@ public class AdvancedImageFromDockerFile
 		// -> We use our own docker/gitignore processor here
 		if(this.baseDir.isPresent())
 		{
+			final Path safeBaseDir = this.baseDir.get();
 			this.log().info(
 				"Calculating files to transfer to docker[baseDir={},baseDirRelativeIgnoreFile={}]",
-				this.baseDir.get(),
+				safeBaseDir,
 				this.baseDirRelativeIgnoreFile.orElse(null));
-			final TransferFilesCreator tfc =
-				new TransferFilesCreator(this.baseDir.get(), this.baseDirRelativeIgnoreFile.orElse(null));
 			
-			final Set<Path> alwaysIncludePaths = new HashSet<>(this.alwaysTransferPaths);
+			final Set<String> alwaysIncludePaths = new HashSet<>(this.alwaysTransferRelativePaths);
 			if(this.alwaysTransferDockerfilePath)
 			{
-				final Path determinedDockerfilePath = this.dockerFilePath.orElse(Path.of("Dockerfile"));
-				alwaysIncludePaths.add(this.baseDir
-					.map(basePath -> basePath.relativize(determinedDockerfilePath))
-					.orElse(determinedDockerfilePath));
+				alwaysIncludePaths.add(this.relativeDockerFilePathString(safeBaseDir));
 			}
 			
-			final List<Path> filesToTransfer = tfc.getFilesToTransfer(this.additionalIgnoreLines, alwaysIncludePaths);
+			final long startTransferMs = System.currentTimeMillis();
 			
-			this.log().info("{}x files will be transferred", filesToTransfer.size());
+			final TransferFilesCreator tfc = this.transferFilesCreatorSupplier.apply(
+				safeBaseDir,
+				this.baseDirRelativeIgnoreFile.orElse(null));
+			final Map<Path, String> filesToTransfer = tfc.determineFilesToTransfer(
+				this.preGitIgnoreLines,
+				this.ignoreFileLineFilter,
+				this.postGitIgnoreLines,
+				alwaysIncludePaths);
+			
+			this.log().info(
+				"{}x files will be transferred (determination took {}ms)",
+				filesToTransfer.size(),
+				System.currentTimeMillis() - startTransferMs);
+			
 			if(this.log().isDebugEnabled())
 			{
-				filesToTransfer.forEach(p -> this.log().debug("Will transmit: '{}'", p));
+				filesToTransfer.forEach((a, r) -> this.log().debug("Will transmit: '{}' -> '{}'", a, r));
 			}
 			
 			this.log().info("Building InputStream with docker-context...");
-			buildImageCmd.withTarInputStream(tfc.getAllFilesToTransferAsTarInputStream(filesToTransfer));
-			this.log().info("InputStream handed over to Docker");
+			final long startInputStreamBuildMs = System.currentTimeMillis();
+			
+			if(!this.dockerFileLinesModifiers.isEmpty())
+			{
+				this.log().info("Dockerfile lines modifiers are active: {}", this.dockerFileLinesModifiers);
+				final DockerFileContentModifier dockerFileContentModifier =
+					this.dockerFileContentModifierSupplier.apply(
+						this.safeDockerFilePath(),
+						this.dockerFileLinesModifiers,
+						filesToTransfer.values());
+				if(dockerFileContentModifier != null)
+				{
+					this.transferArchiveTARCompressor.withContentModifier(dockerFileContentModifier);
+				}
+			}
+			buildImageCmd.withTarInputStream(tfc.getAllFilesToTransferAsTarInputStream(
+				filesToTransfer.keySet(),
+				this.transferArchiveTARCompressor));
+			
+			this.log().info(
+				"InputStream handed over to Docker, took {}ms",
+				System.currentTimeMillis() - startInputStreamBuildMs);
 		}
 		this.baseDir.ifPresent(d -> buildImageCmd.withBaseDirectory(d.toFile()));
 		
@@ -393,6 +432,16 @@ public class AdvancedImageFromDockerFile
 			.forEach(resolvedDependencyImages::add);
 		
 		return resolvedDependencyImages;
+	}
+	
+	protected String relativeDockerFilePathString(final Path baseDir)
+	{
+		return FastFilePathUtil.relativize(baseDir, this.safeDockerFilePath());
+	}
+	
+	protected Path safeDockerFilePath()
+	{
+		return this.dockerFilePath.orElseGet(() -> Path.of("Dockerfile"));
 	}
 	
 	protected void prePullDependencyImages(final Set<String> imagesToPull)
@@ -440,20 +489,10 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
-	public Optional<Path> getDockerFilePath()
-	{
-		return this.dockerFilePath;
-	}
-	
 	public AdvancedImageFromDockerFile withDockerFilePath(final Path dockerFilePath)
 	{
 		this.dockerFilePath = Optional.ofNullable(dockerFilePath);
 		return this;
-	}
-	
-	public Optional<Path> getBaseDir()
-	{
-		return this.baseDir;
 	}
 	
 	public AdvancedImageFromDockerFile withBaseDir(final Path baseDir)
@@ -462,31 +501,33 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
-	public Optional<Path> getBaseDirRelativeIgnoreFile()
-	{
-		return this.baseDirRelativeIgnoreFile;
-	}
-	
 	public AdvancedImageFromDockerFile withBaseDirRelativeIgnoreFile(final Path baseDirRelativeIgnoreFile)
 	{
 		this.baseDirRelativeIgnoreFile = Optional.ofNullable(baseDirRelativeIgnoreFile);
 		return this;
 	}
 	
-	public List<String> getAdditionalIgnoreLines()
+	public AdvancedImageFromDockerFile withPreGitIgnoreLines(final String... preGitIgnoreLines)
 	{
-		return this.additionalIgnoreLines;
-	}
-	
-	public AdvancedImageFromDockerFile withAdditionalIgnoreLines(final String... additionalIgnoreLines)
-	{
-		this.additionalIgnoreLines = Arrays.asList(additionalIgnoreLines);
+		this.preGitIgnoreLines = new LinkedHashSet<>(List.of(preGitIgnoreLines));
 		return this;
 	}
 	
-	public AdvancedImageFromDockerFile withAlwaysTransferPaths(final Set<Path> alwaysTransferPaths)
+	public AdvancedImageFromDockerFile withIgnoreFileLineFilter(final Predicate<String> ignoreFileLineFilter)
 	{
-		this.alwaysTransferPaths = new HashSet<>(Objects.requireNonNull(alwaysTransferPaths));
+		this.ignoreFileLineFilter = ignoreFileLineFilter;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withPostGitIgnoreLines(final String... postGitIgnoreLines)
+	{
+		this.postGitIgnoreLines = new LinkedHashSet<>(List.of(postGitIgnoreLines));
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withAlwaysTransferRelativPaths(final Set<String> alwaysTransferPaths)
+	{
+		this.alwaysTransferRelativePaths = new HashSet<>(Objects.requireNonNull(alwaysTransferPaths));
 		return this;
 	}
 	
@@ -502,34 +543,38 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
+	public AdvancedImageFromDockerFile withTransferFilesCreatorSupplier(
+		final BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier)
+	{
+		this.transferFilesCreatorSupplier = Objects.requireNonNull(transferFilesCreatorSupplier);
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withTransferArchiveTARCompressor(
+		final TransferArchiveTARCompressor transferArchiveTARCompressor)
+	{
+		this.transferArchiveTARCompressor = Objects.requireNonNull(transferArchiveTARCompressor);
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withDockerFileContentModifierSupplier(
+		final TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
+			dockerFileContentModifierSupplier)
+	{
+		this.dockerFileContentModifierSupplier = Objects.requireNonNull(dockerFileContentModifierSupplier);
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withDockerFileLinesModifier(
+		final DockerFileLineModifier dockerFileLinesModifier)
+	{
+		this.dockerFileLinesModifiers.add(dockerFileLinesModifier);
+		return this;
+	}
+	
 	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageCmd> modifier)
 	{
 		this.buildImageCmdModifiers.add(modifier);
 		return this;
-	}
-	
-	public boolean isDeleteOnExit()
-	{
-		return this.deleteOnExit;
-	}
-	
-	public Set<String> getExternalDependencyImageNames()
-	{
-		return this.externalDependencyImageNames;
-	}
-	
-	public String getDockerImageName()
-	{
-		return this.dockerImageName;
-	}
-	
-	public Map<String, Transferable> getTransferables()
-	{
-		return this.transferables;
-	}
-	
-	public Map<String, String> getBuildArgs()
-	{
-		return this.buildArgs;
 	}
 }

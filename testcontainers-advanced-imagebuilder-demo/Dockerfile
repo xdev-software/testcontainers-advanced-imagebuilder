@@ -1,34 +1,36 @@
+# syntax=docker/dockerfile:1-labs
 # Stage 1: Build the dummy app
 ARG JAVA_VERSION=21
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
 
 RUN apk add --no-cache git bash
 
-# Create non root user
-ARG userName=limitedbuild
-ARG groupName=limitedbuild
-ARG userId=1000
-
-RUN addgroup --system ${groupName} \
-	&& adduser --uid ${userId} --system --disabled-password --shell /bin/bash ${userName} \
-	&& adduser ${userName} ${groupName}
-
-# Create build dir
-RUN mkdir /build \
-    && chown ${userName}:${groupName} /build
 WORKDIR /build
 
-USER ${userName}
+# Copy & Cache wrapper
+COPY --parents mvnw .mvn/** ./
+RUN ./mvnw --version
 
-# Copying context is prepared by Testcontainers
-COPY --chown=${userName}:${groupName} . ./
+# Copy & Cache poms/dependencies
+COPY --parents **/pom.xml ./
+# Resolve jars so that they can be cached and don't need to be downloaded when a Java file changes
+ARG MAVEN_GO_OFFLINE_COMMAND='./mvnw -B dependency:go-offline -pl "testcontainers-advanced-imagebuilder-dummy-app" -am -DincludeScope=runtime -T2C'
+RUN echo "Executing '$MAVEN_GO_OFFLINE_COMMAND'"
+RUN ${MAVEN_GO_OFFLINE_COMMAND}
 
-# RUN chmod +x ./mvnw
-ARG mvncmd='clean package -pl "testcontainers-advanced-imagebuilder-dummy-app" -am -T2C -Dmaven.test.skip'
+# Copying all other files
+COPY . ./
 
-RUN echo "Executing '$mvncmd'"
-RUN chmod +x ./mvnw \
-  && ./mvnw -B ${mvncmd}
+# A valid Git repo is required for the build
+RUN git config --global user.email "dynamic@build.local" \
+  && git config --global user.name "Dynamic Build" \
+  && git init --initial-branch=dynamically-built-tcst \
+  && git add . \
+  && git commit -m "Init commit"
+
+ARG MAVEN_BUILD_COMMAND='./mvnw -B clean package -pl "testcontainers-advanced-imagebuilder-dummy-app" -am -T2C -Dmaven.test.skip'
+RUN echo "Executing '$MAVEN_BUILD_COMMAND'"
+RUN ${MAVEN_BUILD_COMMAND}
 
 # Stage 2: Build the executable image
 FROM eclipse-temurin:21-jre-alpine
