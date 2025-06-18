@@ -21,6 +21,7 @@ import static software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Str
 /**
  * Matcher built from patterns for file names (single path segments). This class is immutable and thread safe.
  */
+@SuppressWarnings("java:S2160") // Eclipse
 public class NameMatcher extends AbstractMatcher
 {
 	protected final boolean beginning;
@@ -41,14 +42,9 @@ public class NameMatcher extends AbstractMatcher
 			pattern = Strings.deleteBackslash(pattern);
 		}
 		this.beginning = !pattern.isEmpty() && pattern.charAt(0) == this.slash;
-		if(!this.beginning)
-		{
-			this.subPattern = pattern;
-		}
-		else
-		{
-			this.subPattern = pattern.substring(1);
-		}
+		this.subPattern = !this.beginning
+			? pattern
+			: pattern.substring(1);
 	}
 	
 	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"})

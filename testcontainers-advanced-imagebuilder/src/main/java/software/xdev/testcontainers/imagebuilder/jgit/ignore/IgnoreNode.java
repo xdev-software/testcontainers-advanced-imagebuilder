@@ -102,6 +102,7 @@ public class IgnoreNode
 	 * match); or null, if undetermined
 	 * @since 4.11
 	 */
+	@SuppressWarnings("java:S2447")
 	public Boolean checkIgnored(
 		final String entryPath,
 		final boolean isDirectory)

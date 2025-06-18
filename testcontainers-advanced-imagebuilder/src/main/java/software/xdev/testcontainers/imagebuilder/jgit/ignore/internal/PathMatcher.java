@@ -34,17 +34,14 @@ import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Strings.Pa
  * <p>
  * This class is immutable and thread safe.
  */
-@SuppressWarnings("checkstyle:FinalParameters")
+@SuppressWarnings("java:S2160") // Eclipse
 public class PathMatcher extends AbstractMatcher
 {
 	protected static final WildMatcher WILD_NO_DIRECTORY = new WildMatcher(false);
-	
 	protected static final WildMatcher WILD_ONLY_DIRECTORY = new WildMatcher(true);
 	
 	protected final List<IMatcher> matchers;
-	
 	protected final char slash;
-	
 	protected final boolean beginning;
 	
 	protected PathMatcher(
@@ -74,6 +71,7 @@ public class PathMatcher extends AbstractMatcher
 			&& count(path, this.slash, true) > 0;
 	}
 	
+	@SuppressWarnings("java:S5413")
 	protected static List<IMatcher> createMatchers(
 		final List<String> segments,
 		final Character pathSeparator, final boolean dirOnly)
@@ -112,6 +110,7 @@ public class PathMatcher extends AbstractMatcher
 	 * @return never null
 	 * @throws InvalidPatternException if pattern is invalid
 	 */
+	@SuppressWarnings("checkstyle:FinalParameters")
 	public static IMatcher createPathMatcher(
 		String pattern,
 		final Character pathSeparator, final boolean dirOnly)
@@ -179,7 +178,8 @@ public class PathMatcher extends AbstractMatcher
 	
 	@Override
 	public boolean matches(
-		final String path, final boolean assumeDirectory,
+		final String path,
+		final boolean assumeDirectory,
 		final boolean pathMatch)
 	{
 		if(this.matchers == null)
@@ -232,7 +232,10 @@ public class PathMatcher extends AbstractMatcher
 			"Path matcher works only on entire paths");
 	}
 	
-	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"})
+	@SuppressWarnings({
+		"java:S3776",
+		"PMD.CognitiveComplexity",
+		"java:S6541"}) // Eclipse code = Big brain required
 	protected boolean iterate(
 		final String path,
 		final int startIncl,

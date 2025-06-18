@@ -27,6 +27,7 @@ import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier
 /**
  * Emulates <a href="https://docs.docker.com/reference/dockerfile/#copy---parents">COPY --parents</a>
  */
+@SuppressWarnings("java:S1075")
 public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
 {
 	@Override

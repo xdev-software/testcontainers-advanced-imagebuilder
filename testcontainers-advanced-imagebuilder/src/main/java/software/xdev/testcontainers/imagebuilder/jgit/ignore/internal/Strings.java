@@ -580,6 +580,7 @@ public final class Strings
 		return null;
 	}
 	
+	@SuppressWarnings({"java:S135", "java:S127"})
 	static String deleteBackslash(final String s)
 	{
 		if(s.indexOf('\\') < 0)

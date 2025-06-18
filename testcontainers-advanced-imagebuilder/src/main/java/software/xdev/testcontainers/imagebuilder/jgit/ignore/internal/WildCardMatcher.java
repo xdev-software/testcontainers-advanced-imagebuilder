@@ -28,6 +28,7 @@ import software.xdev.testcontainers.imagebuilder.jgit.errors.InvalidPatternExcep
  * <p>
  * This class is immutable and thread safe.
  */
+@SuppressWarnings("java:S2160") // Eclipse
 public class WildCardMatcher extends NameMatcher
 {
 	protected final Pattern p;
