@@ -22,6 +22,7 @@ import static software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Str
 
 import software.xdev.testcontainers.imagebuilder.jgit.errors.InvalidPatternException;
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.PathMatcher;
+import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Strings;
 
 
 /**
@@ -31,12 +32,13 @@ import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.PathMatche
  *
  * @since 3.6
  */
+@SuppressWarnings("javaarchitecture:S7091") // Ja cool und?
 public class FastIgnoreRule
 {
 	/**
 	 * Character used as default path separator for ignore entries
 	 */
-	public static final char PATH_SEPARATOR = '/';
+	public static final char PATH_SEPARATOR = Strings.PATH_SEPARATOR;
 	
 	protected IMatcher matcher;
 	protected boolean inverse;

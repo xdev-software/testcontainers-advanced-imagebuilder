@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import software.xdev.testcontainers.imagebuilder.jgit.errors.InvalidPatternException;
-import software.xdev.testcontainers.imagebuilder.jgit.ignore.FastIgnoreRule;
 
 
 /**
@@ -33,10 +32,12 @@ import software.xdev.testcontainers.imagebuilder.jgit.ignore.FastIgnoreRule;
  */
 public final class Strings
 {
+	public static final char PATH_SEPARATOR = '/';
+	
 	static char getPathSeparator(final Character pathSeparator)
 	{
 		return pathSeparator == null
-			? FastIgnoreRule.PATH_SEPARATOR
+			? PATH_SEPARATOR
 			: pathSeparator;
 	}
 	
@@ -100,7 +101,7 @@ public final class Strings
 			final char charAt = pattern.charAt(i);
 			if(!Character.isWhitespace(charAt))
 			{
-				return charAt == FastIgnoreRule.PATH_SEPARATOR;
+				return charAt == PATH_SEPARATOR;
 			}
 		}
 		return false;
