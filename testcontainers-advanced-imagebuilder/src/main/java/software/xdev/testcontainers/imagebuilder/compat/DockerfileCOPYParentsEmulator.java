@@ -101,25 +101,4 @@ public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
 				+ (!lineAfterArgsFinal.isEmpty() ? " " + lineAfterArgsFinal : "")
 				+ " " + e.getValue());
 	}
-	
-	// public static void main(final String[] args)
-	// {
-	// 	System.out.println(String.join(
-	// 		"\n", new DockerfileCOPYParentsEmulator().modify(
-	// 			List.of(
-	// 				"COPY --parents mvnw .mvn/** --abc ./",
-	// 				"COPY --parents **/pom.xml ./",
-	// 				"COPY --parents abc/def.txt ./"
-	// 			), Set.of(
-	// 				".mvn/wrapper/maven-wrapper.properties",
-	// 				"mvnw",
-	// 				"Dockerfile",
-	// 				"pom.xml",
-	// 				"a/pom.xml",
-	// 				"a/b/pom.xml",
-	// 				"a/b/c/pom.xml",
-	// 				"abc/def.txt",
-	// 				"ignoreme.txt"
-	// 			))));
-	// }
 }
