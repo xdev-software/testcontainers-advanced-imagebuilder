@@ -132,7 +132,11 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths) throws IOException
 	{
-		try(final Stream<Path> walk = Files.walk(this.baseDir))
+		try(final Stream<Path> walk = Files.find(
+			this.baseDir,
+			Integer.MAX_VALUE,
+			// Ignore directories
+			(path, attrs) -> attrs.isRegularFile()))
 		{
 			final Map<String, Boolean> cachedDirectoryOutcome = new ConcurrentHashMap<>();
 			
@@ -142,7 +146,6 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 				.toList()
 				.stream()
 				.parallel()
-				.filter(Files::isRegularFile)
 				.map(file -> this.determineFileForTransfer(
 					ignoreNode,
 					alwaysIncludedRelativePaths,
