@@ -95,6 +95,7 @@ public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
 				final GlobMatcher matcher = new GlobMatcher(source);
 				return relativeFiles.stream()
 					.filter(matcher::matches)
+					.sorted()
 					.map(s -> Map.entry(s, targetPathFinalForRelative + s));
 			})
 			.map(e -> lineBeforeArgs + " " + e.getKey()

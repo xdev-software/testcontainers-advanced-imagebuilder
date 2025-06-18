@@ -51,9 +51,9 @@ class DockerfileCOPYParentsEmulatorTest
 				"FROM alpine:3",
 				"COPY mvnw --abc ./",
 				"COPY .mvn/wrapper/maven-wrapper.properties --abc ./.mvn/wrapper/maven-wrapper.properties",
+				"COPY a/b/c/pom.xml ./a/b/c/pom.xml",
 				"COPY a/b/pom.xml ./a/b/pom.xml",
 				"COPY a/pom.xml ./a/pom.xml",
-				"COPY a/b/c/pom.xml ./a/b/c/pom.xml",
 				"COPY pom.xml ./pom.xml",
 				"COPY abc/def.txt ./abc/def.txt"
 			),
