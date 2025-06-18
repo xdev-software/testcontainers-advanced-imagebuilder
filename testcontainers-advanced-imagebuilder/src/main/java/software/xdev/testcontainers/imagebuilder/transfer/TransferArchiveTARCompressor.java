@@ -39,7 +39,7 @@ import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
  */
 public class TransferArchiveTARCompressor
 {
-	private final List<FileContentModifier> fileContentModifiers = new ArrayList<>();
+	protected final List<FileContentModifier> fileContentModifiers = new ArrayList<>();
 	
 	public TransferArchiveTARCompressor withContentModifier(final FileContentModifier modifier)
 	{

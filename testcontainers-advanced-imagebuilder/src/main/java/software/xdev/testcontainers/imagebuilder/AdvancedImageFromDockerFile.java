@@ -366,6 +366,8 @@ public class AdvancedImageFromDockerFile
 			}
 			
 			this.log().info("Building InputStream with docker-context...");
+			final long startInputStreamBuildMs = System.currentTimeMillis();
+			
 			if(!this.dockerFileLinesModifiers.isEmpty())
 			{
 				this.log().info("Dockerfile lines modifiers are active: {}", this.dockerFileLinesModifiers);
@@ -382,7 +384,10 @@ public class AdvancedImageFromDockerFile
 			buildImageCmd.withTarInputStream(tfc.getAllFilesToTransferAsTarInputStream(
 				filesToTransfer.keySet(),
 				this.transferArchiveTARCompressor));
-			this.log().info("InputStream handed over to Docker");
+			
+			this.log().info(
+				"InputStream handed over to Docker, took {}ms",
+				System.currentTimeMillis() - startInputStreamBuildMs);
 		}
 		this.baseDir.ifPresent(d -> buildImageCmd.withBaseDirectory(d.toFile()));
 		

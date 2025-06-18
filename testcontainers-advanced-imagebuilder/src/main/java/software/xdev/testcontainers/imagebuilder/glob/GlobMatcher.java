@@ -21,9 +21,12 @@ import software.xdev.testcontainers.imagebuilder.jgit.errors.InvalidPatternExcep
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Strings;
 
 
+/**
+ * A simple implementation of GlobMatcher that utilizes JGit's {@link Strings#convertGlob(String)}
+ */
 public class GlobMatcher
 {
-	private final Pattern pattern;
+	protected final Pattern pattern;
 	
 	public GlobMatcher(final String pattern)
 	{
