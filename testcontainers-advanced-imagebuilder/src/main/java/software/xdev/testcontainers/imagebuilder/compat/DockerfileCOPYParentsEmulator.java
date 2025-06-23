@@ -18,9 +18,11 @@ package software.xdev.testcontainers.imagebuilder.compat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import software.xdev.testcontainers.imagebuilder.glob.GlobMatcher;
+import software.xdev.testcontainers.imagebuilder.jgit.errors.InvalidPatternException;
+import software.xdev.testcontainers.imagebuilder.jgit.ignore.internal.Strings;
 import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
 
 
@@ -118,9 +120,9 @@ public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
 		return Stream.of(args)
 			.limit((long)args.length - (isLastArg ? 1 : 0))
 			.flatMap(source -> {
-				if(!source.contains("*") && !source.contains("/"))
+				if(!source.contains("*"))
 				{
-					return Stream.of(Map.entry(source, targetPathFinal));
+					return Stream.of(Map.entry(source, targetPathFinalForRelative + removeRelativeStart(source)));
 				}
 				
 				final GlobMatcher matcher = new GlobMatcher(source);
@@ -132,5 +134,39 @@ public class DockerfileCOPYParentsEmulator implements DockerFileLineModifier
 			.map(e -> lineBeforeArgs + " " + e.getKey()
 				+ (!lineAfterArgsFinal.isEmpty() ? " " + lineAfterArgsFinal : "")
 				+ " " + e.getValue());
+	}
+	
+	protected static String removeRelativeStart(final String path)
+	{
+		return path.startsWith("./") ? path.substring(2) : path;
+	}
+	
+	public static class GlobMatcher
+	{
+		protected final Pattern pattern;
+		
+		public GlobMatcher(final String pattern)
+		{
+			try
+			{
+				this.pattern = Pattern.compile("\\/?" + Strings.convertGlob(removeRelativeStart(pattern)));
+			}
+			catch(final InvalidPatternException e)
+			{
+				throw new IllegalArgumentException(e);
+			}
+		}
+		
+		@SuppressWarnings("checkstyle:FinalParameters")
+		protected String correctPathForMatching(String path)
+		{
+			path = removeRelativeStart(path);
+			return path.startsWith("/") ? path : ("/" + path);
+		}
+		
+		public boolean matches(final String path)
+		{
+			return this.pattern.matcher(this.correctPathForMatching(path)).matches();
+		}
 	}
 }
