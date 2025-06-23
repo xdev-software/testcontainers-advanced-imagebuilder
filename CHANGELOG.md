@@ -6,6 +6,7 @@
 * Provide an option to emulate [``COPY --parents``](https://docs.docker.com/reference/dockerfile/#copy---parents) (which is currently not supported by Docker out of the box)
     * This option is required to utilize Docker's cache properly
     ```docker
+    # syntax=docker/dockerfile:1-labs
     # ...
     
     # Copy & Cache wrapper
