@@ -3,7 +3,7 @@
 ARG JAVA_VERSION=21
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
 
-RUN apk add --no-cache git bash
+RUN apk add --no-cache bash
 
 WORKDIR /build
 
@@ -20,13 +20,6 @@ RUN ${MAVEN_GO_OFFLINE_COMMAND}
 
 # Copying all other files
 COPY . ./
-
-# A valid Git repo is required for the build
-RUN git config --global user.email "dynamic@build.local" \
-  && git config --global user.name "Dynamic Build" \
-  && git init --initial-branch=dynamically-built-tcst \
-  && git add . \
-  && git commit -m "Init commit"
 
 ARG MAVEN_BUILD_COMMAND='./mvnw -B clean package -pl "testcontainers-advanced-imagebuilder-dummy-app" -am -T2C -Dmaven.test.skip'
 RUN echo "Executing '$MAVEN_BUILD_COMMAND'"

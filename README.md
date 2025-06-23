@@ -18,7 +18,7 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Makes logger non generic and therefore controllable
 * Some general code cleanup and performance improvements
 
-A common use case - that can also be seen [inside the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java) - is for creating an image - used in e.g. Integration tests - for an application that is also inside the same repo.
+For more details have a look at [the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java).<br/>The demo showcases how an image for another application in the same repo can be built.
 
 ## Installation
 [Installation guide for the latest release](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/releases/latest#Installation)

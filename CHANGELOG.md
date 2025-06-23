@@ -1,11 +1,16 @@
+# 2.0.1
+* Improve matching in ``DockerfileCOPYParentsEmulator`` #134
+  * Now should properly handle ``./``
+
 # 2.0.0
 * Changed ignore backend to utilize [JGit](https://github.com/eclipse-jgit/jgit) 
     * This should now behave exactly like a ``.gitignore``
     * Overall performance should be a lot faster
 * Make it possible to modify transferred files
-* Provide an option to emulate [``COPY --parents``](https://docs.docker.com/reference/dockerfile/#copy---parents) (which is currently not supported by Docker out of the box)
+* Provide an option to emulate [``COPY --parents``](https://docs.docker.com/reference/dockerfile/#copy---parents) using ``DockerfileCOPYParentsEmulator`` (which is currently not supported by Docker out of the box)
     * This option is required to utilize Docker's cache properly
     ```docker
+    # syntax=docker/dockerfile:1-labs
     # ...
     
     # Copy & Cache wrapper

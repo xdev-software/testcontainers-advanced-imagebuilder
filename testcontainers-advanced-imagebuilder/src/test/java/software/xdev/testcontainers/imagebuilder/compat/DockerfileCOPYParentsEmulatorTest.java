@@ -33,29 +33,39 @@ class DockerfileCOPYParentsEmulatorTest
 				"FROM alpine:3",
 				"COPY --parents mvnw .mvn/** --abc ./",
 				"COPY --parents **/pom.xml ./",
-				"COPY --parents abc/def.txt ./"
+				"COPY --parents abc/def.txt ./",
+				"COPY --parents ./d/e/** ./",
+				"COPY ./d/e/** ./", // Keep original
+				"COPY --parents ./it/mvnw ./it/.mvn/** ./xx"
 			), Set.of(
-				".mvn/wrapper/maven-wrapper.properties",
 				"mvnw",
+				".mvn/wrapper/maven-wrapper.properties",
 				"Dockerfile",
 				"pom.xml",
 				"a/pom.xml",
 				"a/b/pom.xml",
 				"a/b/c/pom.xml",
 				"abc/def.txt",
-				"ignoreme.txt"
+				"ignoreme.txt",
+				"d/e/example.txt",
+				"it/mvnw",
+				"it/.mvn/wrapper/maven-wrapper.properties"
 			));
 		Assertions.assertIterableEquals(
 			List.of(
 				"# syntax=docker/dockerfile:1-labs",
 				"FROM alpine:3",
-				"COPY mvnw --abc ./",
+				"COPY mvnw --abc ./mvnw",
 				"COPY .mvn/wrapper/maven-wrapper.properties --abc ./.mvn/wrapper/maven-wrapper.properties",
 				"COPY a/b/c/pom.xml ./a/b/c/pom.xml",
 				"COPY a/b/pom.xml ./a/b/pom.xml",
 				"COPY a/pom.xml ./a/pom.xml",
 				"COPY pom.xml ./pom.xml",
-				"COPY abc/def.txt ./abc/def.txt"
+				"COPY abc/def.txt ./abc/def.txt",
+				"COPY d/e/example.txt ./d/e/example.txt",
+				"COPY ./d/e/** ./", // Keep original
+				"COPY ./it/mvnw ./xx/it/mvnw",
+				"COPY it/.mvn/wrapper/maven-wrapper.properties ./xx/it/.mvn/wrapper/maven-wrapper.properties"
 			),
 			lines);
 	}
