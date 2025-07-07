@@ -1,3 +1,6 @@
+# 2.0.2
+* Don't try to pull reserved ``scratch`` image during build
+
 # 2.0.1
 * Improve matching in ``DockerfileCOPYParentsEmulator`` #134
   * Now should properly handle ``./``

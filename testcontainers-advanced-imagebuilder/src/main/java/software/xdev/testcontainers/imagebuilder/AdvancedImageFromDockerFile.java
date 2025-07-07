@@ -448,6 +448,7 @@ public class AdvancedImageFromDockerFile
 	{
 		imagesToPull
 			.stream()
+			.filter(this::canImageNameBePulled)
 			.map(imageName -> CompletableFuture.runAsync(() -> {
 				try
 				{
@@ -470,6 +471,12 @@ public class AdvancedImageFromDockerFile
 			}))
 			.toList()
 			.forEach(CompletableFuture::join);
+	}
+	
+	protected boolean canImageNameBePulled(final String imageName)
+	{
+		// scratch is reserved
+		return !"scratch".equals(imageName);
 	}
 	
 	protected Logger log()
