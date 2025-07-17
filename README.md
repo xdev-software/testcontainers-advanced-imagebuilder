@@ -1,6 +1,5 @@
 [![Latest version](https://img.shields.io/maven-central/v/software.xdev/testcontainers-advanced-imagebuilder?logo=apache%20maven)](https://mvnrepository.com/artifact/software.xdev/testcontainers-advanced-imagebuilder)
 [![Build](https://img.shields.io/github/actions/workflow/status/xdev-software/testcontainers-advanced-imagebuilder/check-build.yml?branch=develop)](https://github.com/xdev-software/testcontainers-advanced-imagebuilder/actions/workflows/check-build.yml?query=branch%3Adevelop)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xdev-software_testcontainers-advanced-imagebuilder&metric=alert_status)](https://sonarcloud.io/dashboard?id=xdev-software_testcontainers-advanced-imagebuilder)
 
 # Advanced Image-Builder for Testcontainers Java
 
