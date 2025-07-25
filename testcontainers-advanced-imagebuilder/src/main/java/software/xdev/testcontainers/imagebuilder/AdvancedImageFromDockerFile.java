@@ -66,11 +66,11 @@ import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.model.BuildResponseItem;
 
 import software.xdev.testcontainers.imagebuilder.transfer.DefaultTransferFilesCreator;
-import software.xdev.testcontainers.imagebuilder.transfer.DockerFileContentModifier;
 import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
 import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathUtil;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferArchiveTARCompressor;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferFilesCreator;
+import software.xdev.testcontainers.imagebuilder.transfer.fcm.DockerFileContentModifier;
 
 
 /**
@@ -114,6 +114,7 @@ public class AdvancedImageFromDockerFile
 	protected BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier =
 		DefaultTransferFilesCreator::new;
 	protected TransferArchiveTARCompressor transferArchiveTARCompressor = new TransferArchiveTARCompressor();
+	protected Consumer<TransferArchiveTARCompressor> transferArchiveTARCompressorCustomizer;
 	protected TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
 		dockerFileContentModifierSupplier = DockerFileContentModifier::new;
 	protected List<DockerFileLineModifier> dockerFileLinesModifiers = new ArrayList<>();
@@ -161,6 +162,7 @@ public class AdvancedImageFromDockerFile
 		final Logger logger = Optional.ofNullable(this.loggerForBuild)
 			.orElseGet(() -> DockerLoggerFactory.getLogger(this.dockerImageName));
 		
+		@SuppressWarnings("resource")
 		final DockerClient dockerClient = DockerClientFactory.instance().client();
 		
 		this.log().info("Starting resolving image[name='{}']", this.dockerImageName);
@@ -381,8 +383,14 @@ public class AdvancedImageFromDockerFile
 					this.transferArchiveTARCompressor.withContentModifier(dockerFileContentModifier);
 				}
 			}
+			
+			if(this.transferArchiveTARCompressorCustomizer != null)
+			{
+				this.transferArchiveTARCompressorCustomizer.accept(this.transferArchiveTARCompressor);
+			}
+			
 			buildImageCmd.withTarInputStream(tfc.getAllFilesToTransferAsTarInputStream(
-				filesToTransfer.keySet(),
+				filesToTransfer,
 				this.transferArchiveTARCompressor));
 			
 			this.log().info(
@@ -561,6 +569,13 @@ public class AdvancedImageFromDockerFile
 		final TransferArchiveTARCompressor transferArchiveTARCompressor)
 	{
 		this.transferArchiveTARCompressor = Objects.requireNonNull(transferArchiveTARCompressor);
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withTransferArchiveTARCompressorCustomizer(
+		final Consumer<TransferArchiveTARCompressor> customizer)
+	{
+		this.transferArchiveTARCompressorCustomizer = customizer;
 		return this;
 	}
 	

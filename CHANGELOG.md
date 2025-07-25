@@ -1,3 +1,8 @@
+# 2.1.0
+* Add customizer for ``TransferArchiveTARCompressor``
+* Create more predefined FileContentModifiers
+  * This allows to e.g. remove not needed Maven modules when building
+
 # 2.0.2
 * Don't try to pull reserved ``scratch`` image during build
 

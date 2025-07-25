@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package software.xdev.testcontainers.imagebuilder.transfer;
+package software.xdev.testcontainers.imagebuilder.transfer.fcm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 
-public interface TransferFilesCreator
+@FunctionalInterface
+public interface FileContentModifier
 {
-	Map<Path, String> determineFilesToTransfer(
-		Set<String> preGitIgnoreLines,
-		Predicate<String> ignoreFileLineFilter,
-		Set<String> postGitIgnoreLines,
-		Set<String> alwaysIncludedRelativePaths);
-	
-	InputStream getAllFilesToTransferAsTarInputStream(
-		Map<Path, String> filesToTransfer,
-		TransferArchiveTARCompressor transferArchiveTARCompressor);
+	InputStream apply(Path sourcePath, String targetPath, TarArchiveEntry tarArchiveEntry) throws IOException;
 }

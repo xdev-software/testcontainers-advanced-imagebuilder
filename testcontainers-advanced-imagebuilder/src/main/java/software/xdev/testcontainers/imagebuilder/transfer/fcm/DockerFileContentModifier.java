@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package software.xdev.testcontainers.imagebuilder.transfer;
+package software.xdev.testcontainers.imagebuilder.transfer.fcm;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+
+import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
 
 
 public class DockerFileContentModifier implements FileContentModifier
@@ -46,14 +48,17 @@ public class DockerFileContentModifier implements FileContentModifier
 	}
 	
 	@Override
-	public InputStream apply(final Path path, final TarArchiveEntry tarArchiveEntry) throws IOException
+	public InputStream apply(
+		final Path sourcePath,
+		final String targetPath,
+		final TarArchiveEntry tarArchiveEntry) throws IOException
 	{
-		if(!this.dockerFilePath.equals(path))
+		if(!this.dockerFilePath.equals(sourcePath))
 		{
 			return null;
 		}
 		
-		List<String> lines = Files.readAllLines(path);
+		List<String> lines = Files.readAllLines(sourcePath);
 		
 		for(final DockerFileLineModifier lineModifier : this.linesModifiers)
 		{
