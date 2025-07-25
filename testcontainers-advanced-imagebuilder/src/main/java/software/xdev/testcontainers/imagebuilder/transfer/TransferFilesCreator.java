@@ -17,7 +17,6 @@ package software.xdev.testcontainers.imagebuilder.transfer;
 
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -32,6 +31,6 @@ public interface TransferFilesCreator
 		Set<String> alwaysIncludedRelativePaths);
 	
 	InputStream getAllFilesToTransferAsTarInputStream(
-		Collection<Path> filesToTransfer,
+		Map<Path, String> filesToTransfer,
 		TransferArchiveTARCompressor transferArchiveTARCompressor);
 }

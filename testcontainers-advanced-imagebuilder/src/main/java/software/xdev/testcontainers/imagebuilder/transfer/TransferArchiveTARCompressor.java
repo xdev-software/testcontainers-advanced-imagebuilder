@@ -25,12 +25,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
+
+import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileContentModifier;
 
 
 /**
@@ -48,8 +51,7 @@ public class TransferArchiveTARCompressor
 	}
 	
 	public File archiveTARFiles(
-		final File base,
-		final Iterable<Path> filesPaths,
+		final Map<Path, String> filesToTransfer,
 		final String archiveNameWithOutExtension) throws IOException
 	{
 		final File tarFile = new File(FileUtils.getTempDirectoryPath(), archiveNameWithOutExtension + ".tar");
@@ -62,9 +64,9 @@ public class TransferArchiveTARCompressor
 			tos.setLongFileMode(3);
 			tos.setBigNumberMode(2);
 			
-			for(final Path filePath : filesPaths)
+			for(final Map.Entry<Path, String> fileData : filesToTransfer.entrySet())
 			{
-				this.addFileToTar(tos, filePath, FastFilePathUtil.relativize(base.toPath(), filePath));
+				this.addFileToTar(tos, fileData.getKey(), fileData.getValue());
 			}
 		}
 		
@@ -74,34 +76,34 @@ public class TransferArchiveTARCompressor
 	@SuppressWarnings("checkstyle:MagicNumber")
 	protected void addFileToTar(
 		final TarArchiveOutputStream tarArchiveOutputStream,
-		final Path file,
-		final String entryName
+		final Path sourePath,
+		final String targetPath
 	) throws IOException
 	{
 		try
 		{
-			if(Files.isSymbolicLink(file))
+			if(Files.isSymbolicLink(sourePath))
 			{
-				final TarArchiveEntry tarArchiveEntry = new TarArchiveEntry(entryName, (byte)50);
-				tarArchiveEntry.setLinkName(Files.readSymbolicLink(file).toString());
+				final TarArchiveEntry tarArchiveEntry = new TarArchiveEntry(targetPath, (byte)50);
+				tarArchiveEntry.setLinkName(Files.readSymbolicLink(sourePath).toString());
 				tarArchiveOutputStream.putArchiveEntry(tarArchiveEntry);
 				return;
 			}
 			
 			final TarArchiveEntry tarArchiveEntry =
-				(TarArchiveEntry)tarArchiveOutputStream.createArchiveEntry(file.toFile(), entryName);
-			if(file.toFile().canExecute())
+				(TarArchiveEntry)tarArchiveOutputStream.createArchiveEntry(sourePath.toFile(), targetPath);
+			if(sourePath.toFile().canExecute())
 			{
 				tarArchiveEntry.setMode(tarArchiveEntry.getMode() | 493);
 			}
 			
-			if(!file.toFile().isFile())
+			if(!sourePath.toFile().isFile())
 			{
 				tarArchiveOutputStream.putArchiveEntry(tarArchiveEntry);
 				return;
 			}
 			
-			try(final InputStream input = this.createInputStreamForFile(file, tarArchiveEntry))
+			try(final InputStream input = this.createInputStreamForFile(sourePath, targetPath, tarArchiveEntry))
 			{
 				// put it after it was modified
 				tarArchiveOutputStream.putArchiveEntry(tarArchiveEntry);
@@ -114,17 +116,20 @@ public class TransferArchiveTARCompressor
 		}
 	}
 	
-	protected InputStream createInputStreamForFile(final Path filePath, final TarArchiveEntry tarArchiveEntry)
+	protected InputStream createInputStreamForFile(
+		final Path sourePath,
+		final String targetPath,
+		final TarArchiveEntry tarArchiveEntry)
 		throws IOException
 	{
 		for(final FileContentModifier fcm : this.fileContentModifiers)
 		{
-			final InputStream is = fcm.apply(filePath, tarArchiveEntry);
+			final InputStream is = fcm.apply(sourePath, targetPath, tarArchiveEntry);
 			if(is != null)
 			{
 				return is;
 			}
 		}
-		return new BufferedInputStream(Files.newInputStream(filePath));
+		return new BufferedInputStream(Files.newInputStream(sourePath));
 	}
 }

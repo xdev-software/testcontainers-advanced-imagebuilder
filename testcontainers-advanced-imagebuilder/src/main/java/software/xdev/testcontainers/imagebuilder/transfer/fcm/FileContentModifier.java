@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package software.xdev.testcontainers.imagebuilder.transfer;
+package software.xdev.testcontainers.imagebuilder.transfer.fcm;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,5 +25,5 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 @FunctionalInterface
 public interface FileContentModifier
 {
-	InputStream apply(Path path, TarArchiveEntry tarArchiveEntry) throws IOException;
+	InputStream apply(Path sourcePath, String targetPath, TarArchiveEntry tarArchiveEntry) throws IOException;
 }
