@@ -1,5 +1,5 @@
 # 2.1.1
-* Address a JDK bug which results in a crash when encountering recursive NTFS junctions on Windows
+* Addresses a JDK bug which results in a crash or "infinite" loop when encountering recursive NTFS junctions on Windows #155
 
 # 2.1.0
 * Add customizer for ``TransferArchiveTARCompressor``
