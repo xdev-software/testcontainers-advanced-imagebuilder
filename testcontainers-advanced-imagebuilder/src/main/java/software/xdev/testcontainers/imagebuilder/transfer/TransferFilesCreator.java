@@ -29,7 +29,7 @@ public interface TransferFilesCreator
 		Predicate<String> ignoreFileLineFilter,
 		Set<String> postGitIgnoreLines,
 		Set<String> alwaysIncludedRelativePaths,
-		boolean useWinNTFSJunctionFix);
+		boolean useWinNTFSJunctionFixIfApplicable);
 	
 	InputStream getAllFilesToTransferAsTarInputStream(
 		Map<Path, String> filesToTransfer,

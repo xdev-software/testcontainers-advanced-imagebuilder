@@ -121,7 +121,7 @@ public class AdvancedImageFromDockerFile
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected Set<String> externalDependencyImageNames = Collections.emptySet();
-	protected boolean useWinNTFSJunctionFix;
+	protected boolean useWinNTFSJunctionFixIfApplicable;
 	
 	@SuppressWarnings("checkstyle:MagicNumber")
 	public AdvancedImageFromDockerFile()
@@ -366,7 +366,7 @@ public class AdvancedImageFromDockerFile
 				this.ignoreFileLineFilter,
 				this.postGitIgnoreLines,
 				alwaysIncludePaths,
-				this.useWinNTFSJunctionFix);
+				this.useWinNTFSJunctionFixIfApplicable);
 			
 			this.log().info(
 				"{}x files will be transferred (determination took {}ms)",
@@ -612,14 +612,14 @@ public class AdvancedImageFromDockerFile
 	}
 	
 	/**
-	 * Should the fix for a crash when encountering Windows NTFS Junctions be applied?
+	 * Should the fix for a crash when encountering Windows NTFS Junctions be applied if applicable?
 	 * <p>
 	 * See {@link software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs} for details
 	 * </p>
 	 */
-	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFix(final boolean useWinNTFSJunctionFix)
+	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFixIfApplicable(final boolean useWinNTFSJunctionFixIfApplicable)
 	{
-		this.useWinNTFSJunctionFix = useWinNTFSJunctionFix;
+		this.useWinNTFSJunctionFixIfApplicable = useWinNTFSJunctionFixIfApplicable;
 		return this;
 	}
 }

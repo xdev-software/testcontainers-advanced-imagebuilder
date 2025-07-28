@@ -83,7 +83,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		final Predicate<String> ignoreFileLineFilter,
 		final Set<String> postGitIgnoreLines,
 		final Set<String> alwaysIncludedRelativePaths,
-		final boolean useWinNTFSJunctionFix)
+		final boolean useWinNTFSJunctionFixIfApplicable)
 	{
 		try
 		{
@@ -102,7 +102,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 			return this.walkFilesAndDetermineTransfer(
 				ignoreNode,
 				alwaysIncludedRelativePaths,
-				useWinNTFSJunctionFix);
+				useWinNTFSJunctionFixIfApplicable);
 		}
 		catch(final IOException ioe)
 		{
@@ -136,10 +136,10 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 	protected Map<Path, String> walkFilesAndDetermineTransfer(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
-		final boolean useWinNTFSJunctionFix) throws IOException
+		final boolean useWinNTFSJunctionFixIfApplicable) throws IOException
 	{
 		try(final Stream<Path> walk = findFiles(
-			useWinNTFSJunctionFix,
+			useWinNTFSJunctionFixIfApplicable,
 			this.baseDir,
 			Integer.MAX_VALUE,
 			// Ignore directories
@@ -165,14 +165,14 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 	}
 	
 	protected static Stream<Path> findFiles(
-		final boolean useWinNTFSJunctionFix,
+		final boolean useWinNTFSJunctionFixIfApplicable,
 		final Path start,
 		final int maxDepth,
 		final BiPredicate<Path, BasicFileAttributes> matcher,
 		final FileVisitOption... options)
 		throws IOException
 	{
-		return useWinNTFSJunctionFix && WinNTFSJunctionFiles.shouldBeApplied(start)
+		return useWinNTFSJunctionFixIfApplicable && WinNTFSJunctionFiles.shouldBeApplied(start)
 			? WinNTFSJunctionFiles.find(start, maxDepth, matcher, options)
 			: Files.find(start, maxDepth, matcher, options);
 	}
