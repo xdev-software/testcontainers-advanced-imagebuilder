@@ -21,8 +21,10 @@ import java.util.List;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.DockerClientFactory;
 
 import software.xdev.testcontainers.imagebuilder.compat.DockerfileCOPYParentsEmulator;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentModifier;
@@ -35,6 +37,15 @@ class AdvancedImageFromDockerfileTest
 	@Test
 	void simpleCheck()
 	{
+		try
+		{
+			DockerClientFactory.instance().client();
+		}
+		catch(final IllegalStateException iex)
+		{
+			Assumptions.abort("Failed to find docker environment: " + iex.getMessage());
+		}
+		
 		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built")
 			.withLoggerForBuild(LoggerFactory.getLogger("container.build"))
 			.withPostGitIgnoreLines(
