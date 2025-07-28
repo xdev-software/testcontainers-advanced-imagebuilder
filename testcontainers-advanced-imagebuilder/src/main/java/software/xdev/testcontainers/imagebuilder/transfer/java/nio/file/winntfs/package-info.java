@@ -18,6 +18,11 @@
  * <a href="https://github.com/xdev-software/testcontainers-advanced-imagebuilder/issues/155">
  * recursive NTFS junctions on Windows
  * </a>.
+ * <p>
+ * <b>Please note:</b>
+ * Enabling it also requires adding ``--add-exports java.base/sun.nio.fs=ALL-UNNAMED`` or performance will be
+ * impacted by 100x due non-accessible file attributes cache
+ * </p>
  *
  * @see <a href="https://en.wikipedia.org/wiki/NTFS_links#Junction_points">NTFS junction</a>
  */

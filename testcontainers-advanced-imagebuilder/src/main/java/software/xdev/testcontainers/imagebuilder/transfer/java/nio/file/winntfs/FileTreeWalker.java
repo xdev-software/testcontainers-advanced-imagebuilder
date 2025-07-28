@@ -55,6 +55,9 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Walks a file tree, generating a sequence of events corresponding to the files in the tree.
@@ -240,43 +243,59 @@ public class FileTreeWalker implements Closeable
 	}
 	
 	// region Reflect access BasicFileAttributesHolder
-	private boolean initializedBasicFileAttributesHolderClazz;
-	private Class<?> basicFileAttributesHolderClazz;
-	private Method mBasicFileAttributesHolderGet;
+	private static boolean initializedBasicFileAttributesHolderClazz;
+	private static Class<?> basicFileAttributesHolderClazz;
+	private static Method mBasicFileAttributesHolderGet;
+	private static boolean wasBasicFileAttributesHolderGetAccessSuccess;
 	
-	private void initBasicFileAttributesHolderClazz()
+	private static void initBasicFileAttributesHolderClazz()
 	{
-		if(!this.initializedBasicFileAttributesHolderClazz)
+		if(!initializedBasicFileAttributesHolderClazz)
 		{
 			try
 			{
-				this.basicFileAttributesHolderClazz = Class.forName("sun.nio.fs.BasicFileAttributesHolder");
-				this.mBasicFileAttributesHolderGet = this.basicFileAttributesHolderClazz.getMethod("get");
-				this.mBasicFileAttributesHolderGet.setAccessible(true);
+				basicFileAttributesHolderClazz = Class.forName("sun.nio.fs.BasicFileAttributesHolder");
+				mBasicFileAttributesHolderGet = basicFileAttributesHolderClazz.getMethod("get");
+				mBasicFileAttributesHolderGet.setAccessible(true);
 			}
 			catch(final Exception ignored)
 			{
 				// Ignored
 			}
-			this.initializedBasicFileAttributesHolderClazz = true;
+			initializedBasicFileAttributesHolderClazz = true;
 		}
 	}
 	
-	private boolean isBasicFileAttributesHolder(final Path file)
+	private static boolean isBasicFileAttributesHolder(final Path file)
 	{
-		this.initBasicFileAttributesHolderClazz();
+		initBasicFileAttributesHolderClazz();
 		
-		return this.basicFileAttributesHolderClazz != null
-			&& this.basicFileAttributesHolderClazz.isInstance(file);
+		return basicFileAttributesHolderClazz != null
+			&& basicFileAttributesHolderClazz.isInstance(file);
 	}
 	
-	private BasicFileAttributes extractFromBasicFileAttributesHolder(final Path file)
+	private static BasicFileAttributes extractFromBasicFileAttributesHolder(final Path file)
 	{
 		try
 		{
-			return (BasicFileAttributes)this.mBasicFileAttributesHolderGet.invoke(file);
+			final BasicFileAttributes attrs = (BasicFileAttributes)mBasicFileAttributesHolderGet.invoke(file);
+			wasBasicFileAttributesHolderGetAccessSuccess = true;
+			return attrs;
 		}
-		catch(final IllegalAccessException | InvocationTargetException ignored)
+		catch(final IllegalAccessException ex)
+		{
+			// Did we ever access it successfully?
+			if(!wasBasicFileAttributesHolderGetAccessSuccess)
+			{
+				basicFileAttributesHolderClazz = null;
+				mBasicFileAttributesHolderGet = null;
+				final Logger logger = LoggerFactory.getLogger(FileTreeWalker.class);
+				logger.warn("Failed to access BasicFileAttributesHolder", ex);
+				logger.warn("To fix this add '--add-exports java.base/sun.nio.fs=ALL-UNNAMED' as VM options");
+			}
+			return null;
+		}
+		catch(final InvocationTargetException ignored)
 		{
 			return null;
 		}

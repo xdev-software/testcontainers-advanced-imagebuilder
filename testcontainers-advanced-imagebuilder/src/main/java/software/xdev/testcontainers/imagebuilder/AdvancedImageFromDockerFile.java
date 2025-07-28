@@ -96,8 +96,8 @@ public class AdvancedImageFromDockerFile
 	StringsTrait<AdvancedImageFromDockerFile>,
 	DockerfileTrait<AdvancedImageFromDockerFile>
 {
-	protected static final Logger LOGGER = LoggerFactory.getLogger(AdvancedImageFromDockerFile.class);
 	protected final String dockerImageName;
+	protected final Logger defaultLogger;
 	
 	protected final boolean deleteOnExit;
 	protected final Map<String, Transferable> transferables = new HashMap<>();
@@ -121,6 +121,7 @@ public class AdvancedImageFromDockerFile
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
 	protected Set<String> externalDependencyImageNames = Collections.emptySet();
+	protected boolean useWinNTFSJunctionFix;
 	
 	@SuppressWarnings("checkstyle:MagicNumber")
 	public AdvancedImageFromDockerFile()
@@ -135,8 +136,17 @@ public class AdvancedImageFromDockerFile
 	
 	public AdvancedImageFromDockerFile(final String dockerImageName, final boolean deleteOnExit)
 	{
+		this(
+			dockerImageName,
+			deleteOnExit,
+			LoggerFactory.getLogger(AdvancedImageFromDockerFile.class.getName() + "." + dockerImageName));
+	}
+	
+	public AdvancedImageFromDockerFile(final String dockerImageName, final boolean deleteOnExit, final Logger logger)
+	{
 		this.dockerImageName = dockerImageName;
 		this.deleteOnExit = deleteOnExit;
+		this.defaultLogger = logger;
 	}
 	
 	@Override
@@ -355,7 +365,8 @@ public class AdvancedImageFromDockerFile
 				this.preGitIgnoreLines,
 				this.ignoreFileLineFilter,
 				this.postGitIgnoreLines,
-				alwaysIncludePaths);
+				alwaysIncludePaths,
+				this.useWinNTFSJunctionFix);
 			
 			this.log().info(
 				"{}x files will be transferred (determination took {}ms)",
@@ -489,7 +500,7 @@ public class AdvancedImageFromDockerFile
 	
 	protected Logger log()
 	{
-		return LOGGER;
+		return this.defaultLogger;
 	}
 	
 	public AdvancedImageFromDockerFile withBuildArg(final String key, final String value)
@@ -597,6 +608,18 @@ public class AdvancedImageFromDockerFile
 	public AdvancedImageFromDockerFile withBuildImageCmdModifier(final Consumer<BuildImageCmd> modifier)
 	{
 		this.buildImageCmdModifiers.add(modifier);
+		return this;
+	}
+	
+	/**
+	 * Should the fix for a crash when encountering Windows NTFS Junctions be applied?
+	 * <p>
+	 * See {@link software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs} for details
+	 * </p>
+	 */
+	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFix(final boolean useWinNTFSJunctionFix)
+	{
+		this.useWinNTFSJunctionFix = useWinNTFSJunctionFix;
 		return this;
 	}
 }
