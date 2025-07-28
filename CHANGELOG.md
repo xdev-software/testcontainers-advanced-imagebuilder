@@ -1,3 +1,6 @@
+# 2.1.1
+* Address a JDK bug which results in a crash when encountering recursive NTFS junctions on Windows
+
 # 2.1.0
 * Add customizer for ``TransferArchiveTARCompressor``
 * Create more predefined FileContentModifiers

@@ -20,8 +20,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -32,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +46,7 @@ import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.FastIgnoreRule;
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.IgnoreNode;
+import software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs.WinNTFSJunctionFiles;
 
 
 /**
@@ -131,7 +135,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths) throws IOException
 	{
-		try(final Stream<Path> walk = Files.find(
+		try(final Stream<Path> walk = findFiles(
 			this.baseDir,
 			Integer.MAX_VALUE,
 			// Ignore directories
@@ -154,6 +158,18 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 				.sorted(Map.Entry.comparingByValue()) // Sort by relative path
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (l, r) -> r, LinkedHashMap::new));
 		}
+	}
+	
+	protected static Stream<Path> findFiles(
+		final Path start,
+		final int maxDepth,
+		final BiPredicate<Path, BasicFileAttributes> matcher,
+		final FileVisitOption... options)
+		throws IOException
+	{
+		return WinNTFSJunctionFiles.shouldBeApplied(start)
+			? WinNTFSJunctionFiles.find(start, maxDepth, matcher, options)
+			: Files.find(start, maxDepth, matcher, options);
 	}
 	
 	@SuppressWarnings("java:S2789")
