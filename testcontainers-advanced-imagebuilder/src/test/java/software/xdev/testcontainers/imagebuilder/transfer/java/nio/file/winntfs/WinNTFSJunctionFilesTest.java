@@ -92,6 +92,7 @@ class WinNTFSJunctionFilesTest
 		assertEquals(testFile, files.get(0));
 	}
 	
+	@SuppressWarnings("PMD.SystemPrintln")
 	private static void doMklink(final String name, final Path target, final Path workdir) throws IOException
 	{
 		final ProcessBuilder pb = new ProcessBuilder();

@@ -75,6 +75,7 @@ import java.util.Iterator;
  *
  * @see Files#walkFileTree
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.CognitiveComplexity"})
 public class FileTreeWalker implements Closeable
 {
 	private final boolean followLinks;
@@ -212,6 +213,7 @@ public class FileTreeWalker implements Closeable
 	 * @throws NullPointerException     if {@code options} is {@code null} or the options array contains a {@code null}
 	 *                                  element
 	 */
+	@SuppressWarnings("PMD.ExhaustiveSwitchHasDefault")
 	FileTreeWalker(final Collection<FileVisitOption> options, final int maxDepth)
 	{
 		boolean fl = false;
@@ -406,7 +408,7 @@ public class FileTreeWalker implements Closeable
 		}
 		
 		// file is a directory, attempt to open it
-		DirectoryStream<Path> stream = null;
+		final DirectoryStream<Path> stream;
 		try
 		{
 			stream = Files.newDirectoryStream(entry);
