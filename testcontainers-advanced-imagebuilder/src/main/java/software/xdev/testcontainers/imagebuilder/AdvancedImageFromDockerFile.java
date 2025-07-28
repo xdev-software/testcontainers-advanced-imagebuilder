@@ -617,7 +617,8 @@ public class AdvancedImageFromDockerFile
 	 * See {@link software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs} for details
 	 * </p>
 	 */
-	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFixIfApplicable(final boolean useWinNTFSJunctionFixIfApplicable)
+	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFixIfApplicable(
+		final boolean useWinNTFSJunctionFixIfApplicable)
 	{
 		this.useWinNTFSJunctionFixIfApplicable = useWinNTFSJunctionFixIfApplicable;
 		return this;
