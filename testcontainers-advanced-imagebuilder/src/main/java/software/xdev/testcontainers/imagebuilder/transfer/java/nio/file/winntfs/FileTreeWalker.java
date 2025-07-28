@@ -239,6 +239,7 @@ public class FileTreeWalker implements Closeable
 		this.maxDepth = maxDepth;
 	}
 	
+	// region Reflect access BasicFileAttributesHolder
 	private boolean initializedBasicFileAttributesHolderClazz;
 	private Class<?> basicFileAttributesHolderClazz;
 	private Method mBasicFileAttributesHolderGet;
@@ -280,6 +281,7 @@ public class FileTreeWalker implements Closeable
 			return null;
 		}
 	}
+	// endregion
 	
 	/**
 	 * Returns the attributes of the given file, taking into account whether the walk is following sym links is not.
@@ -394,8 +396,9 @@ public class FileTreeWalker implements Closeable
 		
 		// at maximum depth or file is not a directory
 		final int depth = this.stack.size();
+		// MODIFIED: Patched here -------------------------v
 		if(depth >= this.maxDepth || !(attrs.isDirectory() && !attrs.isOther()))
-		{ // <-- PATCH IS HERE
+		{
 			return new Event(EventType.ENTRY, entry, attrs);
 		}
 		
