@@ -25,14 +25,15 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     strategy:
       matrix:
         java: [17, 21]
         distribution: [temurin]
-
+        os: [ubuntu-latest, windows-latest] # Windows is needed for recursive NTFS junctions
+    
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
       
@@ -44,9 +45,10 @@ jobs:
         cache: 'maven'
       
     - name: Build with Maven
-      run: ./mvnw -B clean package -P run-integration-tests
+      run: ./mvnw -B clean package -P run-integration-tests -T2C
       
     - name: Check for uncommited changes
+      shell: bash
       run: |
         if [[ "$(git status --porcelain)" != "" ]]; then
           echo ----------------------------------------
