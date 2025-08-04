@@ -1,7 +1,7 @@
 # 2.2.0
 * Added an explicit option for enabling the Windows NTFS junction fix: ``useWinNTFSJunctionFixIfApplicable`` #155
   * Enabling it also requires adding ``--add-exports java.base/sun.nio.fs=ALL-UNNAMED`` or performance will be impacted by ~20x due to non-accessible file attributes cache
-  * This option is temporary and will be removed once the underlying JDK bug was fixed
+  * This option is temporary and will be removed once the [underlying JDK bug](https://bugs.openjdk.org/browse/JDK-8364277) was fixed
 * The default logger of ``AdvancedImageFromDockerFile`` now also includes ``dockerImageName`` to make it easier to distinguish between parallel builds
 
 # 2.1.1
