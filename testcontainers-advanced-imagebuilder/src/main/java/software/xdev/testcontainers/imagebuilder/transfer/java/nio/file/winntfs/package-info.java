@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 /**
- * This package was forked from the OpenJDK (as of 21.0.7) to resolve a crash/infinite loop when encountering
+ * This package was forked from the OpenJDK (25) to resolve a crash/infinite loop when encountering
  * <a href="https://github.com/xdev-software/testcontainers-advanced-imagebuilder/issues/155">
  * recursive NTFS junctions on Windows
  * </a>.
  * <p>
  * <b>Please note:</b>
- * Enabling it also requires adding ``--add-exports java.base/sun.nio.fs=ALL-UNNAMED`` or performance will be
- * impacted by ~20x due non-accessible file attributes cache
+ * Enabling/Using it also requires adding <code>--add-exports java.base/sun.nio.fs=ALL-UNNAMED</code> as arguments
+ * or performance will be impacted by ~20x due non-accessible file attributes cache.
  * </p>
  *
+ * @see <a href="https://bugs.openjdk.org/browse/JDK-8364277">JDK-8364277</a>
  * @see <a href="https://en.wikipedia.org/wiki/NTFS_links#Junction_points">NTFS junction</a>
  */
 package software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs;

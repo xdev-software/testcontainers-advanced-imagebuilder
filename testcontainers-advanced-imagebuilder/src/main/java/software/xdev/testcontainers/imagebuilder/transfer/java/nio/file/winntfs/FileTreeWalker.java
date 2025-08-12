@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*
- * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,21 +162,8 @@ public class FileTreeWalker implements Closeable
 	/**
 	 * Events returned by the {@link #walk} and {@link #next} methods.
 	 */
-	static class Event
+	record Event(EventType type, Path file, BasicFileAttributes attributes, IOException ioeException)
 	{
-		private final EventType type;
-		private final Path file;
-		private final BasicFileAttributes attrs;
-		private final IOException ioe;
-		
-		private Event(final EventType type, final Path file, final BasicFileAttributes attrs, final IOException ioe)
-		{
-			this.type = type;
-			this.file = file;
-			this.attrs = attrs;
-			this.ioe = ioe;
-		}
-		
 		Event(final EventType type, final Path file, final BasicFileAttributes attrs)
 		{
 			this(type, file, attrs, null);
@@ -185,26 +172,6 @@ public class FileTreeWalker implements Closeable
 		Event(final EventType type, final Path file, final IOException ioe)
 		{
 			this(type, file, null, ioe);
-		}
-		
-		EventType type()
-		{
-			return this.type;
-		}
-		
-		Path file()
-		{
-			return this.file;
-		}
-		
-		BasicFileAttributes attributes()
-		{
-			return this.attrs;
-		}
-		
-		IOException ioeException()
-		{
-			return this.ioe;
 		}
 	}
 	
@@ -307,16 +274,13 @@ public class FileTreeWalker implements Closeable
 	 * The
 	 * {@code canUseCached} argument determines whether this method can use cached attributes.
 	 */
-	@SuppressWarnings("removal")
 	private BasicFileAttributes getAttributes(final Path file, final boolean canUseCached)
 		throws IOException
 	{
 		// if attributes are cached then use them if possible
-		if(canUseCached
-			&& this.isBasicFileAttributesHolder(file)
-			&& System.getSecurityManager() == null)
+		if(canUseCached && isBasicFileAttributesHolder(file))
 		{
-			final BasicFileAttributes cached = this.extractFromBasicFileAttributesHolder(file);
+			final BasicFileAttributes cached = extractFromBasicFileAttributesHolder(file);
 			if(cached != null && (!this.followLinks || !cached.isSymbolicLink()))
 			{
 				return cached;
@@ -337,7 +301,7 @@ public class FileTreeWalker implements Closeable
 				throw ioe;
 			}
 			
-			// attempt to get attrmptes without following links
+			// attempt to get attributes without following links
 			attrs = Files.readAttributes(
 				file,
 				BasicFileAttributes.class,
@@ -374,7 +338,7 @@ public class FileTreeWalker implements Closeable
 						return true;
 					}
 				}
-				catch(final IOException | SecurityException x)
+				catch(final IOException e)
 				{
 					// ignore
 				}
@@ -386,13 +350,9 @@ public class FileTreeWalker implements Closeable
 	/**
 	 * Visits the given file, returning the {@code Event} corresponding to that visit.
 	 * <p>
-	 * The {@code ignoreSecurityException} parameter determines whether any SecurityException should be ignored or not.
-	 * If a SecurityException is thrown, and is ignored, then this method returns {@code null} to mean that there is no
-	 * event corresponding to a visit to the file.
-	 * <p>
 	 * The {@code canUseCached} parameter determines whether cached attributes for the file can be used or not.
 	 */
-	private Event visit(final Path entry, final boolean ignoreSecurityException, final boolean canUseCached)
+	private Event visit(final Path entry, final boolean canUseCached)
 	{
 		// need the file attributes
 		final BasicFileAttributes attrs;
@@ -403,14 +363,6 @@ public class FileTreeWalker implements Closeable
 		catch(final IOException ioe)
 		{
 			return new Event(EventType.ENTRY, entry, ioe);
-		}
-		catch(final SecurityException se)
-		{
-			if(ignoreSecurityException)
-			{
-				return null;
-			}
-			throw se;
 		}
 		
 		// at maximum depth or file is not a directory
@@ -439,14 +391,6 @@ public class FileTreeWalker implements Closeable
 		{
 			return new Event(EventType.ENTRY, entry, ioe);
 		}
-		catch(final SecurityException se)
-		{
-			if(ignoreSecurityException)
-			{
-				return null;
-			}
-			throw se;
-		}
 		
 		// push a directory node to the stack and return an event
 		this.stack.push(new DirectoryNode(entry, attrs.fileKey(), stream));
@@ -463,12 +407,9 @@ public class FileTreeWalker implements Closeable
 			throw new IllegalStateException("Closed");
 		}
 		
-		final Event ev = this.visit(
+		return this.visit(
 			file,
-			false,   // ignoreSecurityException
 			false);  // canUseCached
-		assert ev != null;
-		return ev;
 	}
 	
 	/**
@@ -483,61 +424,53 @@ public class FileTreeWalker implements Closeable
 		}
 		
 		// continue iteration of the directory at the top of the stack
-		Event ev;
-		do
-		{
-			Path entry = null;
-			IOException ioe = null;
-			
-			// get next entry in the directory
-			if(!top.skipped())
-			{
-				final Iterator<Path> iterator = top.iterator();
-				try
-				{
-					if(iterator.hasNext())
-					{
-						entry = iterator.next();
-					}
-				}
-				catch(final DirectoryIteratorException x)
-				{
-					ioe = x.getCause();
-				}
-			}
-			
-			// no next entry so close and pop directory,
-			// creating corresponding event
-			if(entry == null)
-			{
-				try
-				{
-					top.stream().close();
-				}
-				catch(final IOException e)
-				{
-					if(ioe == null)
-					{
-						ioe = e;
-					}
-					else
-					{
-						ioe.addSuppressed(e);
-					}
-				}
-				this.stack.pop();
-				return new Event(EventType.END_DIRECTORY, top.directory(), ioe);
-			}
-			
-			// visit the entry
-			ev = this.visit(
-				entry,
-				true,   // ignoreSecurityException
-				true);  // canUseCached
-		}
-		while(ev == null);
+		Path entry = null;
+		IOException ioe = null;
 		
-		return ev;
+		// get next entry in the directory
+		if(!top.skipped())
+		{
+			final Iterator<Path> iterator = top.iterator();
+			try
+			{
+				if(iterator.hasNext())
+				{
+					entry = iterator.next();
+				}
+			}
+			catch(final DirectoryIteratorException x)
+			{
+				ioe = x.getCause();
+			}
+		}
+		
+		// no next entry so close and pop directory,
+		// creating corresponding event
+		if(entry == null)
+		{
+			try
+			{
+				top.stream().close();
+			}
+			catch(final IOException e)
+			{
+				if(ioe == null)
+				{
+					ioe = e;
+				}
+				else
+				{
+					ioe.addSuppressed(e);
+				}
+			}
+			this.stack.pop();
+			return new Event(EventType.END_DIRECTORY, top.directory(), ioe);
+		}
+		
+		// visit the entry
+		return this.visit(
+			entry,
+			true);  // canUseCached
 	}
 	
 	/**

@@ -52,7 +52,7 @@ class WinNTFSJunctionFilesTest
 		
 		if(!WinNTFSJunctionFiles.shouldBeApplied(tempDir))
 		{
-			Assumptions.abort("Test is not applicable: Not WIN + NTFS");
+			Assumptions.abort("Test is not applicable");
 		}
 		
 		final Path testFile = sub.resolve("test.txt");
