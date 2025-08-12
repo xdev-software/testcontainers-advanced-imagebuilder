@@ -52,14 +52,27 @@ import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * @see software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs
  */
 public final class WinNTFSJunctionFiles
 {
+	private static final Logger LOG = LoggerFactory.getLogger(WinNTFSJunctionFiles.class);
+	
+	@SuppressWarnings("checkstyle:MagicNumber")
 	public static boolean shouldBeApplied(final Path path)
 	{
+		// JDK-8364277 was fixed in Java 26
+		if(Runtime.version().feature() >= 26)
+		{
+			LOG.info("WindowsNTFSJunctionFix is no longer required "
+				+ "as this is a Java version where JDK-8364277 is fixed");
+			return false;
+		}
 		try
 		{
 			final FileStore store = Files.getFileStore(path);
