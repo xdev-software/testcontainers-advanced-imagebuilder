@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        java: [17, 21, 25]
+        java: [21, 25]
         distribution: [temurin]
         os: [ubuntu-latest, windows-latest] # Windows is needed for recursive NTFS junctions
     runs-on: ${{ matrix.os }}
@@ -76,7 +76,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        java: [17]
+        java: [21]
         distribution: [temurin]
     steps:
     - uses: actions/checkout@v5
@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        java: [17]
+        java: [21]
         distribution: [temurin]
     steps:
     - uses: actions/checkout@v5

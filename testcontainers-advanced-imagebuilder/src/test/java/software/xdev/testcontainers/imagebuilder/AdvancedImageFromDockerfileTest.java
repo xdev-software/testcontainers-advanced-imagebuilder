@@ -18,6 +18,7 @@ package software.xdev.testcontainers.imagebuilder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.junit.jupiter.api.Assertions;
@@ -99,6 +100,6 @@ class AdvancedImageFromDockerfileTest
 				}
 			));
 		
-		Assertions.assertDoesNotThrow(() -> builder.get());
+		Assertions.assertDoesNotThrow(() -> builder.get(5, TimeUnit.MINUTES));
 	}
 }

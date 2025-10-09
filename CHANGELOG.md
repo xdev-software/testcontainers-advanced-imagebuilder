@@ -1,4 +1,5 @@
-# 2.2.2
+# 2.3.0
+* Use Virtual Threads on Java 21+
 * Minor optimizations
 * Updated dependencies
 

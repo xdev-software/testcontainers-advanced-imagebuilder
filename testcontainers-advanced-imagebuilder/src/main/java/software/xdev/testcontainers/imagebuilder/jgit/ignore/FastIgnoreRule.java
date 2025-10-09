@@ -199,17 +199,9 @@ public class FastIgnoreRule
 	@Override
 	public String toString()
 	{
-		final StringBuilder sb = new StringBuilder();
-		if(this.inverse)
-		{
-			sb.append('!');
-		}
-		sb.append(this.matcher);
-		if(this.dirOnly)
-		{
-			sb.append(PATH_SEPARATOR);
-		}
-		return sb.toString();
+		return (this.inverse ? "!" : "")
+			+ this.matcher
+			+ (this.dirOnly ? PATH_SEPARATOR : "");
 	}
 	
 	@Override
