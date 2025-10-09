@@ -1,3 +1,7 @@
+# 2.2.2
+* Minor optimizations
+* Updated dependencies
+
 # 2.2.1
 * Windows NTFS junction fix
   * Automatically disable it on Java 26+ as [JDK-8364277](https://bugs.openjdk.org/browse/JDK-8364277) is fixed there

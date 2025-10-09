@@ -35,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -477,7 +478,7 @@ public class AdvancedImageFromDockerFile
 						imageName);
 					new RemoteDockerImage(DockerImageName.parse(imageName))
 						.withImageNameSubstitutor(ImageNameSubstitutor.noop())
-						.get();
+						.get(10, TimeUnit.MINUTES);
 				}
 				catch(final Exception e)
 				{
