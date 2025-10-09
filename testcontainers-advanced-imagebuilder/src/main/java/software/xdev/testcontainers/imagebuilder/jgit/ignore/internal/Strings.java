@@ -301,7 +301,8 @@ public final class Strings
 		"java:S3776",
 		"PMD.CognitiveComplexity",
 		"PMD.CyclomaticComplexity",
-		"java:S6541"}) // Eclipse code = Big brain required
+		"java:S6541",
+		"PMD.AvoidStringBuilderOrBuffer"}) // Eclipse code = Big brain required
 	public static Pattern convertGlob(final String pattern)
 		throws InvalidPatternException
 	{
@@ -581,7 +582,7 @@ public final class Strings
 		return null;
 	}
 	
-	@SuppressWarnings({"java:S135", "java:S127"})
+	@SuppressWarnings({"java:S135", "java:S127", "PMD.AvoidStringBuilderOrBuffer"})
 	static String deleteBackslash(final String s)
 	{
 		if(s.indexOf('\\') < 0)

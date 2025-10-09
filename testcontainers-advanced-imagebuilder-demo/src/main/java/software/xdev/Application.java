@@ -3,6 +3,8 @@ package software.xdev;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.slf4j.LoggerFactory;
@@ -70,7 +72,17 @@ public final class Application
 				}
 			));
 		
-		final String imageName = builder.get();
+		final String imageName;
+		try
+		{
+			imageName = builder.get(5, TimeUnit.MINUTES);
+		}
+		catch(final TimeoutException e)
+		{
+			System.out.println("Timed out: " + e.getMessage());
+			System.exit(1);
+			return;
+		}
 		
 		System.out.println("Successfully build " + imageName);
 	}
