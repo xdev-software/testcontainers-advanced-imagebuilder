@@ -43,6 +43,8 @@ import java.util.function.Predicate;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.function.TriFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
@@ -53,8 +55,6 @@ import org.testcontainers.images.builder.traits.ClasspathTrait;
 import org.testcontainers.images.builder.traits.DockerfileTrait;
 import org.testcontainers.images.builder.traits.FilesTrait;
 import org.testcontainers.images.builder.traits.StringsTrait;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
-import org.testcontainers.shaded.org.apache.commons.lang3.function.TriFunction;
 import org.testcontainers.utility.Base58;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.DockerLoggerFactory;
