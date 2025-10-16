@@ -1,3 +1,6 @@
+# 2.4.0
+* Update to Testcontainers v2
+
 # 2.3.0
 * Use Virtual Threads on Java 21+
 * Minor optimizations
