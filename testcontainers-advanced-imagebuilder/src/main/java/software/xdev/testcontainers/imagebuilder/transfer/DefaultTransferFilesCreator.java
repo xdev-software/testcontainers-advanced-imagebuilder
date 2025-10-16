@@ -39,10 +39,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
-import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.FastIgnoreRule;
 import software.xdev.testcontainers.imagebuilder.jgit.ignore.IgnoreNode;
@@ -177,7 +177,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 			: Files.find(start, maxDepth, matcher, options);
 	}
 	
-	@SuppressWarnings("java:S2789")
+	@SuppressWarnings({"java:S2789", "OptionalAssignedToNull"})
 	protected Map.Entry<Path, String> determineFileForTransfer(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
@@ -213,7 +213,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		return outcomeDirs;
 	}
 	
-	@SuppressWarnings("java:S2789")
+	@SuppressWarnings({"java:S2789", "OptionalAssignedToNull"})
 	protected Map.Entry<Path, String> determineParentDirectoryForTransfer(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,
@@ -261,7 +261,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 			: null;
 	}
 	
-	@SuppressWarnings("java:S2789")
+	@SuppressWarnings({"java:S2789", "OptionalAssignedToNull"})
 	protected Optional<Map.Entry<Path, String>> shouldIgnore(
 		final IgnoreNode ignoreNode,
 		final Set<String> alwaysIncludedRelativePaths,

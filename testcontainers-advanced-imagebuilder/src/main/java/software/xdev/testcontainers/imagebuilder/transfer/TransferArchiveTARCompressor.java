@@ -30,8 +30,8 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
-import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileContentModifier;
 

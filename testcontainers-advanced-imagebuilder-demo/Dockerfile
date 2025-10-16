@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1-labs
 # Stage 1: Build the dummy app
-ARG JAVA_VERSION=21
+ARG JAVA_VERSION=25
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
 
 RUN apk add --no-cache bash
@@ -26,7 +26,7 @@ RUN echo "Executing '$MAVEN_BUILD_COMMAND'"
 RUN ${MAVEN_BUILD_COMMAND}
 
 # Stage 2: Build the executable image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:$JAVA_VERSION-jre-alpine
 
 ARG user=dummy-app
 ARG group=dummy-app
