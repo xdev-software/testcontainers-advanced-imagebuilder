@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<licensePluginReport goal="FORMAT" timestamp="1760597468211">
+    <module artifactId="testcontainers-advanced-imagebuilder" groupId="software.xdev" version="2.4.0"/>
+    <files>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/AdvancedImageFromDockerFile.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/AdvancedParsedDockerfile.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/compat/DockerfileCOPYParentsEmulator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/concurrent/DefaultExecutorServiceCreator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/concurrent/ExecutorServiceCreator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/concurrent/ExecutorServiceCreatorHolder.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/concurrent/ImageBuilderExecutorServiceHolder.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/errors/InvalidPatternException.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/FastIgnoreRule.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/IMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/IgnoreNode.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/AbstractMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/LeadingAsteriskMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/NameMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/PathMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/Strings.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/TrailingAsteriskMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/WildCardMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/ignore/internal/WildMatcher.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/jgit/package-info.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/DefaultTransferFilesCreator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/DockerFileLineModifier.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/FastFilePathUtil.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/TransferArchiveTARCompressor.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/TransferFilesCreator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/fcm/AdvancedFileContentModifier.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/fcm/DockerFileContentModifier.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/fcm/FileContentModifier.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/fcm/FileLinesContentModifier.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/java/nio/file/winntfs/FileTreeIterator.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/java/nio/file/winntfs/FileTreeWalker.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/java/nio/file/winntfs/WinNTFSJunctionFiles.java" result="NOOP"/>
+        <file path="src/main/java/software/xdev/testcontainers/imagebuilder/transfer/java/nio/file/winntfs/package-info.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/testcontainers/imagebuilder/AdvancedImageFromDockerfileTest.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/testcontainers/imagebuilder/compat/DockerfileCOPYParentsEmulatorTest.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/testcontainers/imagebuilder/transfer/FastFilePathUtilTest.java" result="NOOP"/>
+        <file path="src/test/java/software/xdev/testcontainers/imagebuilder/transfer/java/nio/file/winntfs/WinNTFSJunctionFilesTest.java" result="NOOP"/>
+    </files>
+</licensePluginReport>
