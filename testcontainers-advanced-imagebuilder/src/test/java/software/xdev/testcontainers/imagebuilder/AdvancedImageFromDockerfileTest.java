@@ -34,7 +34,7 @@ import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentMo
 class AdvancedImageFromDockerfileTest
 {
 	// Not it can't be written as a method reference (same method name)
-	@SuppressWarnings({"java:S1612", "PMD.LambdaCanBeMethodReference"})
+	@SuppressWarnings({"java:S1612"})
 	@Test
 	void simpleCheck()
 	{

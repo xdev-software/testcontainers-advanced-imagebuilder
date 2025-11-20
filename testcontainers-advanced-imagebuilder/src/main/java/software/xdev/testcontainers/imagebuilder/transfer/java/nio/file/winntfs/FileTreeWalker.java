@@ -78,7 +78,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see Files#walkFileTree
  */
-@SuppressWarnings({"PMD.GodClass", "PMD.CognitiveComplexity"})
+@SuppressWarnings({"PMD.GodClass"})
 public class FileTreeWalker implements Closeable
 {
 	private final boolean followLinks;
