@@ -32,7 +32,7 @@ jobs:
         os: [ubuntu-latest, windows-latest] # Windows is needed for recursive NTFS junctions
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -79,7 +79,7 @@ jobs:
         java: [21]
         distribution: [temurin]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -115,7 +115,7 @@ jobs:
         java: [21]
         distribution: [temurin]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
