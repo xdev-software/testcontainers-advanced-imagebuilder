@@ -32,7 +32,7 @@ jobs:
         os: [ubuntu-latest, windows-latest] # Windows is needed for recursive NTFS junctions
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -41,7 +41,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Cache Maven
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-mvn-build-${{ hashFiles('**/pom.xml') }}
@@ -79,7 +79,7 @@ jobs:
         java: [21]
         distribution: [temurin]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -88,7 +88,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Cache Maven
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-mvn-checkstyle-${{ hashFiles('**/pom.xml') }}
@@ -96,7 +96,7 @@ jobs:
           ${{ runner.os }}-mvn-checkstyle-
 
     - name: CheckStyle Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: '**/target/checkstyle-cachefile'
         key: ${{ runner.os }}-checkstyle-${{ hashFiles('**/pom.xml') }}
@@ -115,7 +115,7 @@ jobs:
         java: [21]
         distribution: [temurin]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
@@ -124,7 +124,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Cache Maven
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-mvn-pmd-${{ hashFiles('**/pom.xml') }}
@@ -132,7 +132,7 @@ jobs:
           ${{ runner.os }}-mvn-pmd-
 
     - name: PMD Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: '**/target/pmd/pmd.cache'
         key: ${{ runner.os }}-pmd-${{ hashFiles('**/pom.xml') }}
@@ -147,7 +147,7 @@ jobs:
 
     - name: Upload report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: pmd-report
         if-no-files-found: ignore
