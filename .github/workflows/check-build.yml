@@ -1,6 +1,8 @@
 name: Check Build
 
 on:
+  # Dummy test to trigger security workflow
+  # pull_request_target:
   workflow_dispatch:
   push:
     branches: [ develop ]
