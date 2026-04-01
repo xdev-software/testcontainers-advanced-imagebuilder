@@ -70,7 +70,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
 import software.xdev.testcontainers.imagebuilder.concurrent.ImageBuilderExecutorServiceHolder;
 import software.xdev.testcontainers.imagebuilder.transfer.DefaultTransferFilesCreator;
 import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
-import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathUtil;
+import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathRelativzer;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferArchiveTARCompressor;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferFilesCreator;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.DockerFileContentModifier;
@@ -324,7 +324,7 @@ public class AdvancedImageFromDockerFile
 		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.dockerImageName)));
 		
 		this.dockerFilePath.ifPresent(p -> {
-			buildImageCmd.withDockerfilePath(FastFilePathUtil.relativize(
+			buildImageCmd.withDockerfilePath(FastFilePathRelativzer.relativize(
 				this.baseDir.orElse(p.getParent()),
 				p));
 			
@@ -347,7 +347,7 @@ public class AdvancedImageFromDockerFile
 		// -> We use our own docker/gitignore processor here
 		if(this.baseDir.isPresent())
 		{
-			final Path safeBaseDir = this.baseDir.get();
+			final Path safeBaseDir = this.baseDir.orElseThrow();
 			this.log().info(
 				"Calculating files to transfer to docker[baseDir={},baseDirRelativeIgnoreFile={}]",
 				safeBaseDir,
@@ -428,7 +428,7 @@ public class AdvancedImageFromDockerFile
 			.stream()
 			.filter(e -> e.getValue().isPresent())
 			.filter(e -> !resolvedArgs.containsKey(e.getKey()))
-			.forEach(e -> resolvedArgs.put(e.getKey(), e.getValue().get()));
+			.forEach(e -> resolvedArgs.put(e.getKey(), e.getValue().orElseThrow()));
 		
 		final Set<String> resolvedDependencyImages = new HashSet<>();
 		
@@ -458,7 +458,7 @@ public class AdvancedImageFromDockerFile
 	
 	protected String relativeDockerFilePathString(final Path baseDir)
 	{
-		return FastFilePathUtil.relativize(baseDir, this.safeDockerFilePath());
+		return FastFilePathRelativzer.relativize(baseDir, this.safeDockerFilePath());
 	}
 	
 	protected Path safeDockerFilePath()

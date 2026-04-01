@@ -184,7 +184,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		final Path file,
 		final Map<String, Boolean> cachedDirectoryOutcome)
 	{
-		final String relativePath = FastFilePathUtil.relativize(this.baseDir, file);
+		final String relativePath = FastFilePathRelativzer.relativize(this.baseDir, file);
 		
 		// Initial file check
 		final Optional<Map.Entry<Path, String>> outcomeFile = this.shouldIgnore(
