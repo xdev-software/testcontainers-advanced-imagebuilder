@@ -70,7 +70,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
 import software.xdev.testcontainers.imagebuilder.concurrent.ImageBuilderExecutorServiceHolder;
 import software.xdev.testcontainers.imagebuilder.transfer.DefaultTransferFilesCreator;
 import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
-import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathUtil;
+import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathRelativzer;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferArchiveTARCompressor;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferFilesCreator;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.DockerFileContentModifier;
@@ -324,7 +324,7 @@ public class AdvancedImageFromDockerFile
 		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.dockerImageName)));
 		
 		this.dockerFilePath.ifPresent(p -> {
-			buildImageCmd.withDockerfilePath(FastFilePathUtil.relativize(
+			buildImageCmd.withDockerfilePath(FastFilePathRelativzer.relativize(
 				this.baseDir.orElse(p.getParent()),
 				p));
 			
@@ -458,7 +458,7 @@ public class AdvancedImageFromDockerFile
 	
 	protected String relativeDockerFilePathString(final Path baseDir)
 	{
-		return FastFilePathUtil.relativize(baseDir, this.safeDockerFilePath());
+		return FastFilePathRelativzer.relativize(baseDir, this.safeDockerFilePath());
 	}
 	
 	protected Path safeDockerFilePath()

@@ -21,7 +21,7 @@ import java.nio.file.Path;
 /**
  * Fork of {@link org.testcontainers.shaded.com.github.dockerjava.core.util.FilePathUtil} to improve performance
  */
-public final class FastFilePathUtil
+public final class FastFilePathRelativzer
 {
 	// Original code uses Path.toURI() or similar code for file which is extremely slow (150x) because
 	// it queries the file attributes for each file (on Windows)
@@ -33,7 +33,7 @@ public final class FastFilePathUtil
 			: path;
 	}
 	
-	private FastFilePathUtil()
+	private FastFilePathRelativzer()
 	{
 	}
 }

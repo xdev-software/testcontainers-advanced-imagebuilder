@@ -1,3 +1,7 @@
+# 2.5.0
+* Renamed `FastFilePathUtil` -> `FastFilePathRelativzer`
+* Updated dependencies
+
 # 2.4.1
 * Updated dependencies
 

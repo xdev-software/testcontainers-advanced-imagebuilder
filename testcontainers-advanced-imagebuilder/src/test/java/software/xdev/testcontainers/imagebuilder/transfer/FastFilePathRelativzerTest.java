@@ -22,14 +22,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 
-class FastFilePathUtilTest
+class FastFilePathRelativzerTest
 {
 	@Test
 	void sanityCheck()
 	{
 		final Path baseDir = Paths.get("..", "..");
 		final Path path = Paths.get("..", "..", "a", "b");
-		final String relativePath = FastFilePathUtil.relativize(baseDir, path);
+		final String relativePath = FastFilePathRelativzer.relativize(baseDir, path);
 		Assertions.assertEquals("a/b", relativePath);
 	}
 }
