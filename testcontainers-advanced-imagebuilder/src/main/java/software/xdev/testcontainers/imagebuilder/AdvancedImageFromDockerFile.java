@@ -347,7 +347,7 @@ public class AdvancedImageFromDockerFile
 		// -> We use our own docker/gitignore processor here
 		if(this.baseDir.isPresent())
 		{
-			final Path safeBaseDir = this.baseDir.get();
+			final Path safeBaseDir = this.baseDir.orElseThrow();
 			this.log().info(
 				"Calculating files to transfer to docker[baseDir={},baseDirRelativeIgnoreFile={}]",
 				safeBaseDir,
@@ -428,7 +428,7 @@ public class AdvancedImageFromDockerFile
 			.stream()
 			.filter(e -> e.getValue().isPresent())
 			.filter(e -> !resolvedArgs.containsKey(e.getKey()))
-			.forEach(e -> resolvedArgs.put(e.getKey(), e.getValue().get()));
+			.forEach(e -> resolvedArgs.put(e.getKey(), e.getValue().orElseThrow()));
 		
 		final Set<String> resolvedDependencyImages = new HashSet<>();
 		
