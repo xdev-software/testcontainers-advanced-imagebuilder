@@ -289,10 +289,11 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 	}
 	
 	@Override
-	@SuppressWarnings({"java:S2095", "resource"}) // Can't close an InputStream that is returned...
-	public InputStream getAllFilesToTransferAsTarInputStream(
+	@SuppressWarnings({"java:S2095"}) // Can't close an InputStream that is returned...
+	public FilesToTransferInputStreamFactory getAllFilesToTransferAsTarInputStreamFactory(
 		final Map<Path, String> filesToTransfer,
-		final TransferArchiveTARCompressor transferArchiveTARCompressor)
+		final TransferArchiveTARCompressor transferArchiveTARCompressor,
+		final boolean immediatelyFreeUpWhenReadFinished)
 	{
 		File dockerFolderTar = null;
 		try
@@ -301,32 +302,22 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 				filesToTransfer,
 				UUID.randomUUID().toString());
 			final File dockerFolderTarInner = dockerFolderTar;
-			final FileInputStream tarInputStream = FileUtils.openInputStream(dockerFolderTar);
-			return new InputStream()
+			
+			return new FilesToTransferInputStreamFactory()
 			{
 				@Override
-				public int available() throws IOException
+				public InputStream filesToTransfer()
 				{
-					return tarInputStream.available();
-				}
-				
-				@Override
-				public int read() throws IOException
-				{
-					return tarInputStream.read();
-				}
-				
-				@Override
-				public int read(final byte[] buff, final int offset, final int len) throws IOException
-				{
-					return tarInputStream.read(buff, offset, len);
+					return new WrappedTarInputStream(dockerFolderTarInner, immediatelyFreeUpWhenReadFinished);
 				}
 				
 				@Override
 				public void close()
 				{
-					IOUtils.closeQuietly(tarInputStream);
-					FileUtils.deleteQuietly(dockerFolderTarInner);
+					if(!immediatelyFreeUpWhenReadFinished)
+					{
+						FileUtils.deleteQuietly(dockerFolderTarInner);
+					}
 				}
 			};
 		}
@@ -334,6 +325,57 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		{
 			FileUtils.deleteQuietly(dockerFolderTar);
 			throw new UncheckedIOException(ioe);
+		}
+	}
+	
+	protected static class WrappedTarInputStream extends InputStream
+	{
+		protected final File tar;
+		protected final boolean deleteTarOnClose;
+		
+		protected final FileInputStream tarInputStream;
+		
+		protected WrappedTarInputStream(final File tar, final boolean deleteOnClose)
+		{
+			this.tar = tar;
+			this.deleteTarOnClose = deleteOnClose;
+			
+			try
+			{
+				this.tarInputStream = FileUtils.openInputStream(tar);
+			}
+			catch(final IOException ioe)
+			{
+				throw new UncheckedIOException(ioe);
+			}
+		}
+		
+		@Override
+		public int available() throws IOException
+		{
+			return this.tarInputStream.available();
+		}
+		
+		@Override
+		public int read() throws IOException
+		{
+			return this.tarInputStream.read();
+		}
+		
+		@Override
+		public int read(final byte[] buff, final int offset, final int len) throws IOException
+		{
+			return this.tarInputStream.read(buff, offset, len);
+		}
+		
+		@Override
+		public void close()
+		{
+			IOUtils.closeQuietly(this.tarInputStream);
+			if(this.deleteTarOnClose)
+			{
+				FileUtils.deleteQuietly(this.tar);
+			}
 		}
 	}
 }
