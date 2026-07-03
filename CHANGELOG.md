@@ -1,3 +1,6 @@
+# 3.0.1
+* Add overload for `copyForIntermediateTag`
+
 # 3.0.0
 * Added support to build intermediate named images (after the actual images was built)
   * This is highly useful if you want to cache certain images in a CI environment that ignores dangling images instead

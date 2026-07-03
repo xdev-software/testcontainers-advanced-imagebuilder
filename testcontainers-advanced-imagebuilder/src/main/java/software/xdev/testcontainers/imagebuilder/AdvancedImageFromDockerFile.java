@@ -380,6 +380,11 @@ public class AdvancedImageFromDockerFile
 			.collect(Collectors.toSet());
 	}
 	
+	public AdvancedImageFromDockerFile copyForIntermediateTag(final String target)
+	{
+		return this.copyForIntermediateTag(this.dockerImageName + "-" + target, target);
+	}
+	
 	public AdvancedImageFromDockerFile copyForIntermediateTag(
 		final String dockerImageName, final String target)
 	{
