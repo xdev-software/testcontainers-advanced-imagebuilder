@@ -16,12 +16,12 @@
 package software.xdev.testcontainers.imagebuilder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,9 +37,11 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -65,12 +67,13 @@ import org.testcontainers.utility.ResourceReaper;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.model.BuildResponseItem;
 
 import software.xdev.testcontainers.imagebuilder.concurrent.ImageBuilderExecutorServiceHolder;
-import software.xdev.testcontainers.imagebuilder.transfer.DefaultTransferFilesCreator;
+import software.xdev.testcontainers.imagebuilder.log.LoggingBuildImageResultCallback;
 import software.xdev.testcontainers.imagebuilder.transfer.DockerFileLineModifier;
 import software.xdev.testcontainers.imagebuilder.transfer.FastFilePathRelativzer;
+import software.xdev.testcontainers.imagebuilder.transfer.FilesToTransferHandler;
+import software.xdev.testcontainers.imagebuilder.transfer.FilesToTransferInputStreamFactory;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferArchiveTARCompressor;
 import software.xdev.testcontainers.imagebuilder.transfer.TransferFilesCreator;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.DockerFileContentModifier;
@@ -99,32 +102,23 @@ public class AdvancedImageFromDockerFile
 	StringsTrait<AdvancedImageFromDockerFile>,
 	DockerfileTrait<AdvancedImageFromDockerFile>
 {
-	protected final String dockerImageName;
-	protected final Logger defaultLogger;
+	protected String dockerImageName;
+	protected Logger defaultLogger;
 	
-	protected final boolean deleteOnExit;
-	protected final Map<String, Transferable> transferables = new HashMap<>();
+	protected boolean deleteOnExit;
+	protected final Map<String, Transferable> explicitTransferables = new HashMap<>();
 	protected final Map<String, String> buildArgs = new HashMap<>();
 	protected Logger loggerForBuild;
-	protected Optional<Path> dockerFilePath = Optional.empty();
-	protected Optional<Path> baseDir = Optional.empty();
-	protected Optional<Path> baseDirRelativeIgnoreFile = Optional.of(Paths.get(".gitignore"));
-	protected Set<String> preGitIgnoreLines = new LinkedHashSet<>();
-	protected Predicate<String> ignoreFileLineFilter = l -> true;
-	protected Set<String> postGitIgnoreLines = new LinkedHashSet<>();
-	protected boolean alwaysTransferDockerfilePath = true;
-	protected Set<String> alwaysTransferRelativePaths = Set.of();
-	protected BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier =
-		DefaultTransferFilesCreator::new;
-	protected TransferArchiveTARCompressor transferArchiveTARCompressor = new TransferArchiveTARCompressor();
-	protected Consumer<TransferArchiveTARCompressor> transferArchiveTARCompressorCustomizer;
-	protected TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
-		dockerFileContentModifierSupplier = DockerFileContentModifier::new;
-	protected List<DockerFileLineModifier> dockerFileLinesModifiers = new ArrayList<>();
+	protected Optional<Path> optDockerFilePath = Optional.empty();
+	protected Optional<Path> optBaseDir = Optional.empty();
 	protected Optional<String> target = Optional.empty();
 	protected final Set<Consumer<BuildImageCmd>> buildImageCmdModifiers = new LinkedHashSet<>();
-	protected Set<String> externalDependencyImageNames = Collections.emptySet();
-	protected boolean useWinNTFSJunctionFixIfApplicable;
+	protected boolean disablePull;
+	
+	protected FilesToTransferHandler filesToTransferHandler = new FilesToTransferHandler();
+	
+	protected boolean createTransferFilesCache;
+	protected FilesToTransferInputStreamFactory transferFileCache;
 	
 	@SuppressWarnings("checkstyle:MagicNumber")
 	public AdvancedImageFromDockerFile()
@@ -152,22 +146,6 @@ public class AdvancedImageFromDockerFile
 		this.defaultLogger = logger;
 	}
 	
-	@Override
-	public AdvancedImageFromDockerFile withFileFromTransferable(final String path, final Transferable transferable)
-	{
-		if(this.transferables.put(path, transferable) != null)
-		{
-			this.log().warn("overriding previous mapping for '{}'", path);
-		}
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withLoggerForBuild(final Logger loggerForBuild)
-	{
-		this.loggerForBuild = loggerForBuild;
-		return this;
-	}
-	
 	@SuppressWarnings("checkstyle:MagicNumber")
 	@Override
 	protected String resolve()
@@ -188,7 +166,7 @@ public class AdvancedImageFromDockerFile
 			
 			final BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(in);
 			
-			this.configure(buildImageCmd);
+			final ConfigurationState configurationState = this.configure(buildImageCmd);
 			
 			final Map<String, String> labels = new HashMap<>();
 			if(buildImageCmd.getLabels() != null)
@@ -199,7 +177,10 @@ public class AdvancedImageFromDockerFile
 			labels.putAll(DockerClientFactory.DEFAULT_LABELS);
 			buildImageCmd.withLabels(labels);
 			
-			this.prePullDependencyImages(this.externalDependencyImageNames);
+			if(!this.disablePull)
+			{
+				this.prePullDependencyImages(configurationState.getExternalDependencyImageNames());
+			}
 			
 			this.log().info("Starting building image[name='{}']", this.dockerImageName);
 			final long buildStartTime = System.currentTimeMillis();
@@ -208,9 +189,9 @@ public class AdvancedImageFromDockerFile
 			
 			final long bytesToDockerDaemon = this.getBytesToDockerDaemon(out);
 			
-			if(this.log().isInfoEnabled())
+			if(this.log().isDebugEnabled())
 			{
-				this.log().info(
+				this.log().debug(
 					"Transferred {} manually (not actually) to Docker daemon",
 					FileUtils.byteCountToDisplaySize(bytesToDockerDaemon));
 			}
@@ -251,7 +232,7 @@ public class AdvancedImageFromDockerFile
 		{
 			tarArchive.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 			
-			for(final Entry<String, Transferable> entry : this.transferables.entrySet())
+			for(final Entry<String, Transferable> entry : this.explicitTransferables.entrySet())
 			{
 				final Transferable transferable = entry.getValue();
 				final String destination = entry.getKey();
@@ -263,159 +244,106 @@ public class AdvancedImageFromDockerFile
 		return bytesToDockerDaemon;
 	}
 	
-	@SuppressWarnings({"java:S3776", "PMD.CognitiveComplexity"}) // 30 LoC are not that hard to read...
 	protected BuildImageResultCallback getBuildImageResultCallback(final Logger logger)
 	{
-		return new BuildImageResultCallback()
-		{
-			private final List<String> notFlushedString = new ArrayList<>();
-			
-			@Override
-			public void onNext(final BuildResponseItem item)
-			{
-				super.onNext(item);
-				
-				if(item.isErrorIndicated())
-				{
-					if(logger.isInfoEnabled())
-					{
-						logger.info(removeEnd(String.join("", this.notFlushedString), "\n"));
-					}
-					this.notFlushedString.clear();
-					
-					logger.error(item.getErrorDetail() != null ? item.getErrorDetail().getMessage() : "<null>");
-				}
-				else if(item.getStream() != null)
-				{
-					final String details = item.getStream();
-					
-					this.notFlushedString.add(details);
-					
-					if(details.endsWith("\n") || this.notFlushedString.size() > 1000)
-					{
-						if(logger.isInfoEnabled())
-						{
-							logger.info(removeEnd(String.join("", this.notFlushedString), "\n"));
-						}
-						this.notFlushedString.clear();
-					}
-				}
-			}
-		};
+		return new LoggingBuildImageResultCallback(logger);
 	}
 	
-	// From Apache Commons Lang3 - StringUtils
-	protected static String removeEnd(final String str, final String remove)
-	{
-		if(str == null || str.isEmpty() || remove == null || remove.isEmpty())
-		{
-			return str;
-		}
-		if(str.endsWith(remove))
-		{
-			return str.substring(0, str.length() - remove.length());
-		}
-		return str;
-	}
-	
-	protected void configure(final BuildImageCmd buildImageCmd)
+	protected ConfigurationState configure(final BuildImageCmd buildImageCmd)
 	{
 		this.log().info("Configuring...");
+		
+		final ConfigurationState state = this.createNewConfigurationState();
+		
 		buildImageCmd.withTags(new HashSet<>(Collections.singletonList(this.dockerImageName)));
 		
-		this.dockerFilePath.ifPresent(p -> {
+		this.optDockerFilePath.ifPresent(dockerFilePath -> {
 			buildImageCmd.withDockerfilePath(FastFilePathRelativzer.relativize(
-				this.baseDir.orElse(p.getParent()),
-				p));
+				this.optBaseDir.orElse(dockerFilePath.getParent()),
+				dockerFilePath));
 			
-			final AdvancedParsedDockerfile parsedDockerFile = new AdvancedParsedDockerfile(p);
-			
-			this.log().info("Resolving dependency images...");
-			this.externalDependencyImageNames = this.fullyResolveDependencyImages(
-				parsedDockerFile.getExternalImageNames(),
-				parsedDockerFile.getArguments());
-			
-			if(!this.externalDependencyImageNames.isEmpty())
-			{
-				// if we'll be pre-pulling images, disable the built-in pull as it is not necessary and will fail for
-				// authenticated registries
-				buildImageCmd.withPull(false);
-			}
+			this.prepareImagePull(buildImageCmd, dockerFilePath, state);
 		});
 		
-		// NOTE: Testcontainers internal .dockerignore processor is completely broken
-		// -> We use our own docker/gitignore processor here
-		if(this.baseDir.isPresent())
-		{
-			final Path safeBaseDir = this.baseDir.orElseThrow();
-			this.log().info(
-				"Calculating files to transfer to docker[baseDir={},baseDirRelativeIgnoreFile={}]",
-				safeBaseDir,
-				this.baseDirRelativeIgnoreFile.orElse(null));
-			
-			final Set<String> alwaysIncludePaths = new HashSet<>(this.alwaysTransferRelativePaths);
-			if(this.alwaysTransferDockerfilePath)
-			{
-				alwaysIncludePaths.add(this.relativeDockerFilePathString(safeBaseDir));
-			}
-			
-			final long startTransferMs = System.currentTimeMillis();
-			
-			final TransferFilesCreator tfc = this.transferFilesCreatorSupplier.apply(
-				safeBaseDir,
-				this.baseDirRelativeIgnoreFile.orElse(null));
-			final Map<Path, String> filesToTransfer = tfc.determineFilesToTransfer(
-				this.preGitIgnoreLines,
-				this.ignoreFileLineFilter,
-				this.postGitIgnoreLines,
-				alwaysIncludePaths,
-				this.useWinNTFSJunctionFixIfApplicable);
-			
-			this.log().info(
-				"{}x files will be transferred (determination took {}ms)",
-				filesToTransfer.size(),
-				System.currentTimeMillis() - startTransferMs);
-			
-			if(this.log().isDebugEnabled())
-			{
-				filesToTransfer.forEach((a, r) -> this.log().debug("Will transmit: '{}' -> '{}'", a, r));
-			}
-			
-			this.log().info("Building InputStream with docker-context...");
-			final long startInputStreamBuildMs = System.currentTimeMillis();
-			
-			if(!this.dockerFileLinesModifiers.isEmpty())
-			{
-				this.log().info("Dockerfile lines modifiers are active: {}", this.dockerFileLinesModifiers);
-				final DockerFileContentModifier dockerFileContentModifier =
-					this.dockerFileContentModifierSupplier.apply(
-						this.safeDockerFilePath(),
-						this.dockerFileLinesModifiers,
-						filesToTransfer.values());
-				if(dockerFileContentModifier != null)
-				{
-					this.transferArchiveTARCompressor.withContentModifier(dockerFileContentModifier);
-				}
-			}
-			
-			if(this.transferArchiveTARCompressorCustomizer != null)
-			{
-				this.transferArchiveTARCompressorCustomizer.accept(this.transferArchiveTARCompressor);
-			}
-			
-			buildImageCmd.withTarInputStream(tfc.getAllFilesToTransferAsTarInputStream(
-				filesToTransfer,
-				this.transferArchiveTARCompressor));
-			
-			this.log().info(
-				"InputStream handed over to Docker, took {}ms",
-				System.currentTimeMillis() - startInputStreamBuildMs);
-		}
-		this.baseDir.ifPresent(d -> buildImageCmd.withBaseDirectory(d.toFile()));
+		this.optBaseDir.ifPresent(baseDir -> {
+			buildImageCmd.withTarInputStream(this.createTarInputStream(baseDir));
+			buildImageCmd.withBaseDirectory(baseDir.toFile());
+		});
 		
 		this.buildArgs.forEach(buildImageCmd::withBuildArg);
 		this.target.ifPresent(buildImageCmd::withTarget);
 		this.buildImageCmdModifiers.forEach(hook -> hook.accept(buildImageCmd));
+		
+		return state;
+	}
+	
+	protected ConfigurationState createNewConfigurationState()
+	{
+		return new ConfigurationState();
+	}
+	
+	protected static class ConfigurationState
+	{
+		protected Set<String> externalDependencyImageNames = Set.of();
+		
+		protected Set<String> getExternalDependencyImageNames()
+		{
+			return this.externalDependencyImageNames;
+		}
+		
+		protected void setExternalDependencyImageNames(final Set<String> externalDependencyImageNames)
+		{
+			this.externalDependencyImageNames = externalDependencyImageNames;
+		}
+	}
+	
+	protected void prepareImagePull(
+		final BuildImageCmd buildImageCmd,
+		final Path dockerFile,
+		final ConfigurationState state)
+	{
+		if(this.disablePull)
+		{
+			buildImageCmd.withPull(false);
+			return;
+		}
+		
+		final AdvancedParsedDockerfile parsedDockerFile = new AdvancedParsedDockerfile(dockerFile);
+		
+		this.log().info("Resolving dependency images...");
+		final Set<String> externalDependencyImageNames = this.fullyResolveDependencyImages(
+			parsedDockerFile.getExternalImageNames(),
+			parsedDockerFile.getArguments());
+		
+		if(!externalDependencyImageNames.isEmpty())
+		{
+			// if we'll be pre-pulling images, disable the built-in pull as it is not necessary and will fail for
+			// authenticated registries
+			buildImageCmd.withPull(false);
+		}
+		
+		state.setExternalDependencyImageNames(externalDependencyImageNames);
+	}
+	
+	protected InputStream createTarInputStream(final Path baseDir)
+	{
+		if(this.transferFileCache != null)
+		{
+			this.log().info("Using cached transfer files InputStream");
+			return this.transferFileCache.filesToTransfer();
+		}
+		
+		final FilesToTransferInputStreamFactory factory =
+			this.filesToTransferHandler.create(
+				this.log(),
+				baseDir,
+				this.optDockerFilePath.orElseGet(() -> Path.of("Dockerfile")),
+				!this.createTransferFilesCache);
+		if(this.createTransferFilesCache)
+		{
+			this.transferFileCache = factory;
+		}
+		return factory.filesToTransfer();
 	}
 	
 	protected Set<String> fullyResolveDependencyImages(
@@ -430,9 +358,7 @@ public class AdvancedImageFromDockerFile
 			.filter(e -> !resolvedArgs.containsKey(e.getKey()))
 			.forEach(e -> resolvedArgs.put(e.getKey(), e.getValue().orElseThrow()));
 		
-		final Set<String> resolvedDependencyImages = new HashSet<>();
-		
-		fileDependencyImages
+		return fileDependencyImages
 			.stream()
 			.map(imgName -> {
 				if(!imgName.contains("$"))
@@ -451,19 +377,44 @@ public class AdvancedImageFromDockerFile
 				}
 				return newImgName;
 			})
-			.forEach(resolvedDependencyImages::add);
+			.collect(Collectors.toSet());
+	}
+	
+	public AdvancedImageFromDockerFile copyForIntermediateTag(
+		final String dockerImageName, final String target)
+	{
+		if(!this.createTransferFilesCache)
+		{
+			throw new IllegalStateException(
+				"createTransferFilesCache must be true to execute this operation");
+		}
+		if(this.transferFileCache == null)
+		{
+			throw new IllegalStateException("No transferFileCache. Did you build this image?");
+		}
 		
-		return resolvedDependencyImages;
+		return new AdvancedImageFromDockerFile(dockerImageName, this.deleteOnExit)
+			// Copy defaults
+			.withExplicitTransferables(this.explicitTransferables)
+			.withBuildArgs(this.buildArgs)
+			.withLoggerForBuild(this.loggerForBuild)
+			.withDockerFilePath(this.optDockerFilePath.orElse(null))
+			.withBaseDir(this.optBaseDir.orElse(null))
+			.withBuildImageCmdModifiers(this.buildImageCmdModifiers)
+			// Special
+			.withCreateTransferFilesCache(false)
+			.withTransferFileCache(this.transferFileCache)
+			.withTarget(target)
+			.withDisablePull(true);
 	}
 	
-	protected String relativeDockerFilePathString(final Path baseDir)
+	public void cleanCreatedTransferFilesCache()
 	{
-		return FastFilePathRelativzer.relativize(baseDir, this.safeDockerFilePath());
-	}
-	
-	protected Path safeDockerFilePath()
-	{
-		return this.dockerFilePath.orElseGet(() -> Path.of("Dockerfile"));
+		if(this.createTransferFilesCache && this.transferFileCache != null)
+		{
+			this.transferFileCache.close();
+			this.transferFileCache = null;
+		}
 	}
 	
 	protected void prePullDependencyImages(final Set<String> imagesToPull)
@@ -511,6 +462,60 @@ public class AdvancedImageFromDockerFile
 		return this.defaultLogger;
 	}
 	
+	public String build(final Duration timeout)
+	{
+		try
+		{
+			return this.get(timeout.toSeconds(), TimeUnit.SECONDS);
+		}
+		catch(final TimeoutException ex)
+		{
+			throw new IllegalStateException("Timed out while building " + this.dockerImageName, ex);
+		}
+	}
+	
+	// region with
+	
+	public AdvancedImageFromDockerFile withExplicitTransferables(final Map<String, Transferable> transferables)
+	{
+		this.explicitTransferables.putAll(transferables);
+		return this;
+	}
+	
+	@Override
+	public AdvancedImageFromDockerFile withFileFromTransferable(final String path, final Transferable transferable)
+	{
+		if(this.explicitTransferables.put(path, transferable) != null)
+		{
+			this.log().warn("overriding previous mapping for '{}'", path);
+		}
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withLoggerForBuild(final Logger loggerForBuild)
+	{
+		this.loggerForBuild = loggerForBuild;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withDockerImageName(final String dockerImageName)
+	{
+		this.dockerImageName = dockerImageName;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withDefaultLogger(final Logger defaultLogger)
+	{
+		this.defaultLogger = defaultLogger;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withDeleteOnExit(final boolean deleteOnExit)
+	{
+		this.deleteOnExit = deleteOnExit;
+		return this;
+	}
+	
 	public AdvancedImageFromDockerFile withBuildArg(final String key, final String value)
 	{
 		this.buildArgs.put(key, value);
@@ -525,49 +530,13 @@ public class AdvancedImageFromDockerFile
 	
 	public AdvancedImageFromDockerFile withDockerFilePath(final Path dockerFilePath)
 	{
-		this.dockerFilePath = Optional.ofNullable(dockerFilePath);
+		this.optDockerFilePath = Optional.ofNullable(dockerFilePath);
 		return this;
 	}
 	
 	public AdvancedImageFromDockerFile withBaseDir(final Path baseDir)
 	{
-		this.baseDir = Optional.of(baseDir);
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withBaseDirRelativeIgnoreFile(final Path baseDirRelativeIgnoreFile)
-	{
-		this.baseDirRelativeIgnoreFile = Optional.ofNullable(baseDirRelativeIgnoreFile);
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withPreGitIgnoreLines(final String... preGitIgnoreLines)
-	{
-		this.preGitIgnoreLines = new LinkedHashSet<>(List.of(preGitIgnoreLines));
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withIgnoreFileLineFilter(final Predicate<String> ignoreFileLineFilter)
-	{
-		this.ignoreFileLineFilter = ignoreFileLineFilter;
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withPostGitIgnoreLines(final String... postGitIgnoreLines)
-	{
-		this.postGitIgnoreLines = new LinkedHashSet<>(List.of(postGitIgnoreLines));
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withAlwaysTransferRelativPaths(final Set<String> alwaysTransferPaths)
-	{
-		this.alwaysTransferRelativePaths = new HashSet<>(Objects.requireNonNull(alwaysTransferPaths));
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withAlwaysTransferDockerfilePath(final boolean alwaysTransferDockerfilePath)
-	{
-		this.alwaysTransferDockerfilePath = alwaysTransferDockerfilePath;
+		this.optBaseDir = Optional.ofNullable(baseDir);
 		return this;
 	}
 	
@@ -577,39 +546,10 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
-	public AdvancedImageFromDockerFile withTransferFilesCreatorSupplier(
-		final BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier)
+	public AdvancedImageFromDockerFile withBuildImageCmdModifiers(
+		final Collection<Consumer<BuildImageCmd>> modifiers)
 	{
-		this.transferFilesCreatorSupplier = Objects.requireNonNull(transferFilesCreatorSupplier);
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withTransferArchiveTARCompressor(
-		final TransferArchiveTARCompressor transferArchiveTARCompressor)
-	{
-		this.transferArchiveTARCompressor = Objects.requireNonNull(transferArchiveTARCompressor);
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withTransferArchiveTARCompressorCustomizer(
-		final Consumer<TransferArchiveTARCompressor> customizer)
-	{
-		this.transferArchiveTARCompressorCustomizer = customizer;
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withDockerFileContentModifierSupplier(
-		final TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
-			dockerFileContentModifierSupplier)
-	{
-		this.dockerFileContentModifierSupplier = Objects.requireNonNull(dockerFileContentModifierSupplier);
-		return this;
-	}
-	
-	public AdvancedImageFromDockerFile withDockerFileLinesModifier(
-		final DockerFileLineModifier dockerFileLinesModifier)
-	{
-		this.dockerFileLinesModifiers.add(dockerFileLinesModifier);
+		this.buildImageCmdModifiers.addAll(modifiers);
 		return this;
 	}
 	
@@ -619,16 +559,169 @@ public class AdvancedImageFromDockerFile
 		return this;
 	}
 	
+	public AdvancedImageFromDockerFile withDisablePull(final boolean disablePull)
+	{
+		this.disablePull = disablePull;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withCreateTransferFilesCache(
+		final boolean createTransferFilesCache)
+	{
+		this.createTransferFilesCache = createTransferFilesCache;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withTransferFileCache(
+		final FilesToTransferInputStreamFactory transferFileCache)
+	{
+		this.transferFileCache = transferFileCache;
+		return this;
+	}
+	
+	public AdvancedImageFromDockerFile withFilesToTransferHandler(final FilesToTransferHandler filesToTransferHandler)
+	{
+		this.filesToTransferHandler = Objects.requireNonNull(filesToTransferHandler);
+		return this;
+	}
+	
+	public FilesToTransferHandler filesToTransferHandler()
+	{
+		return this.filesToTransferHandler;
+	}
+	
+	public AdvancedImageFromDockerFile configureFilesToTransferHandler(final Consumer<FilesToTransferHandler> c)
+	{
+		c.accept(this.filesToTransferHandler);
+		return this;
+	}
+	
 	/**
-	 * Should the fix for a crash when encountering Windows NTFS Junctions be applied if applicable?
-	 * <p>
-	 * See {@link software.xdev.testcontainers.imagebuilder.transfer.java.nio.file.winntfs} for details
-	 * </p>
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withBaseDirRelativeIgnoreFile(final Path baseDirRelativeIgnoreFile)
+	{
+		this.filesToTransferHandler.withBaseDirRelativeIgnoreFile(baseDirRelativeIgnoreFile);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withPreGitIgnoreLines(final String... preGitIgnoreLines)
+	{
+		this.filesToTransferHandler.withPreGitIgnoreLines(preGitIgnoreLines);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withIgnoreFileLineFilter(final Predicate<String> ignoreFileLineFilter)
+	{
+		this.filesToTransferHandler.withIgnoreFileLineFilter(ignoreFileLineFilter);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withPostGitIgnoreLines(final String... postGitIgnoreLines)
+	{
+		this.filesToTransferHandler.withPostGitIgnoreLines(postGitIgnoreLines);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withAlwaysTransferRelativPaths(final Set<String> alwaysTransferPaths)
+	{
+		this.filesToTransferHandler.withAlwaysTransferRelativPaths(alwaysTransferPaths);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withAlwaysTransferDockerfilePath(final boolean alwaysTransferDockerfilePath)
+	{
+		this.filesToTransferHandler.withAlwaysTransferDockerfilePath(alwaysTransferDockerfilePath);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withTransferFilesCreatorSupplier(
+		final BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier)
+	{
+		this.filesToTransferHandler.withTransferFilesCreatorSupplier(transferFilesCreatorSupplier);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withTransferArchiveTARCompressor(
+		final TransferArchiveTARCompressor transferArchiveTARCompressor)
+	{
+		this.filesToTransferHandler.withTransferArchiveTARCompressor(transferArchiveTARCompressor);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withTransferArchiveTARCompressorCustomizer(
+		final Consumer<TransferArchiveTARCompressor> customizer)
+	{
+		this.filesToTransferHandler.withTransferArchiveTARCompressorCustomizer(customizer);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withDockerFileContentModifierSupplier(
+		final TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
+			dockerFileContentModifierSupplier)
+	{
+		this.filesToTransferHandler.withDockerFileContentModifierSupplier(dockerFileContentModifierSupplier);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
+	public AdvancedImageFromDockerFile withDockerFileLinesModifier(
+		final DockerFileLineModifier dockerFileLinesModifier)
+	{
+		this.filesToTransferHandler.withDockerFileLinesModifier(dockerFileLinesModifier);
+		return this;
+	}
+	
+	/**
+	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
+	 */
+	@Deprecated
 	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFixIfApplicable(
 		final boolean useWinNTFSJunctionFixIfApplicable)
 	{
-		this.useWinNTFSJunctionFixIfApplicable = useWinNTFSJunctionFixIfApplicable;
+		this.filesToTransferHandler.withUseWinNTFSJunctionFixIfApplicable(useWinNTFSJunctionFixIfApplicable);
 		return this;
 	}
+	
+	// endregion
 }

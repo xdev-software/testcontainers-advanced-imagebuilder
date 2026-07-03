@@ -1,3 +1,9 @@
+# 3.0.0
+* Added support to build intermediate named images (after the actual images was built)
+  * This is highly useful if you want to cache certain images in a CI environment that ignores dangling images instead
+* All file transfer logic was moved to `FilesToTransferHandler`
+* Updated dependencies
+
 # 2.5.0
 * Renamed `FastFilePathUtil` -> `FastFilePathRelativzer`
 * Updated dependencies

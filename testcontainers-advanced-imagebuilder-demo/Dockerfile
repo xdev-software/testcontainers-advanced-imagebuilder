@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1-labs
 # Stage 1: Build the dummy app
 ARG JAVA_VERSION=25
-FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS build-env
+FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS builder
 
 RUN apk add --no-cache bash
 
@@ -44,6 +44,6 @@ EXPOSE 8080
 
 USER ${user}
 
-COPY --from=build-env --chown=${user}:${group} build/testcontainers-advanced-imagebuilder-dummy-app/target/dummy-app.jar ${APP_DIR}/dummy-app.jar
+COPY --from=builder --chown=${user}:${group} build/testcontainers-advanced-imagebuilder-dummy-app/target/dummy-app.jar ${APP_DIR}/dummy-app.jar
 
 CMD java ${JAVA_OPTS} -jar /opt/dummy-app/dummy-app.jar
