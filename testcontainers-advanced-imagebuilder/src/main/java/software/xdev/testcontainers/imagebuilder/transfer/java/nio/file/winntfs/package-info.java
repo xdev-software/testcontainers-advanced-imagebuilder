@@ -21,7 +21,7 @@
  * <p>
  * <b>Please note:</b>
  * Enabling/Using it also requires adding <code>--add-exports java.base/sun.nio.fs=ALL-UNNAMED</code> as arguments
- * or performance will be impacted by ~20x due non-accessible file attributes cache.
+ * or performance will be impacted by ~20x due to non-accessible file attributes cache.
  * </p>
  *
  * @see <a href="https://bugs.openjdk.org/browse/JDK-8364277">JDK-8364277</a>

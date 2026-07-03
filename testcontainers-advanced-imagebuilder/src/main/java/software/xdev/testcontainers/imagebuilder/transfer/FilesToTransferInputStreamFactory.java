@@ -15,23 +15,13 @@
  */
 package software.xdev.testcontainers.imagebuilder.transfer;
 
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
+import java.io.InputStream;
 
 
-public interface TransferFilesCreator
+public interface FilesToTransferInputStreamFactory extends AutoCloseable
 {
-	Map<Path, String> determineFilesToTransfer(
-		Set<String> preGitIgnoreLines,
-		Predicate<String> ignoreFileLineFilter,
-		Set<String> postGitIgnoreLines,
-		Set<String> alwaysIncludedRelativePaths,
-		boolean useWinNTFSJunctionFixIfApplicable);
+	InputStream filesToTransfer();
 	
-	FilesToTransferInputStreamFactory getAllFilesToTransferAsTarInputStreamFactory(
-		Map<Path, String> filesToTransfer,
-		TransferArchiveTARCompressor transferArchiveTARCompressor,
-		boolean immediatelyFreeUpWhenReadFinished);
+	@Override
+	void close();
 }

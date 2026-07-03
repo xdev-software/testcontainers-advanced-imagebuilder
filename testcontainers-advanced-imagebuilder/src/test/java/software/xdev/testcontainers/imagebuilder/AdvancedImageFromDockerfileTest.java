@@ -15,13 +15,14 @@
  */
 package software.xdev.testcontainers.imagebuilder;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -34,12 +35,13 @@ import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentMo
 class AdvancedImageFromDockerfileTest
 {
 	// Not it can't be written as a method reference (same method name)
-	@SuppressWarnings({"java:S1612"})
+	@SuppressWarnings("java:S1612")
 	@Test
 	void simpleCheck()
 	{
 		try
 		{
+			// noinspection resource
 			DockerClientFactory.instance().client();
 		}
 		catch(final IllegalStateException iex)
@@ -49,57 +51,66 @@ class AdvancedImageFromDockerfileTest
 		
 		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built")
 			.withLoggerForBuild(LoggerFactory.getLogger("container.build"))
-			.withPostGitIgnoreLines(
-				// Ignore files that aren't related to the built code
-				".git/**",
-				".config/**",
-				".github/**",
-				".idea/**",
-				".run/**",
-				"*.md",
-				"*.cmd",
-				"/renovate.json5",
-				"testcontainers-advanced-imagebuilder/**",
-				"testcontainers-advanced-imagebuilder-demo/**"
-			)
 			.withDockerFilePath(Paths.get("../testcontainers-advanced-imagebuilder-demo/Dockerfile"))
 			.withBaseDir(Paths.get("../"))
-			.withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
-			// Only copy the required maven modules and remove the not required ones
-			.withTransferArchiveTARCompressorCustomizer(c -> c.withContentModifier(
-				new FileLinesContentModifier()
-				{
-					@Override
-					public boolean shouldApply(
-						final Path sourcePath,
-						final String targetPath,
-						final TarArchiveEntry tarArchiveEntry)
+			.withCreateTransferFilesCache(true)
+			.configureFilesToTransferHandler(h -> h
+				.withPostGitIgnoreLines(
+					// Ignore files that aren't related to the built code
+					".git/**",
+					".config/**",
+					".github/**",
+					".idea/**",
+					".run/**",
+					"*.md",
+					"*.cmd",
+					"/renovate.json5",
+					"testcontainers-advanced-imagebuilder/**",
+					"testcontainers-advanced-imagebuilder-demo/**"
+				)
+				.withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
+				// Only copy the required maven modules and remove the not required ones
+				.withTransferArchiveTARCompressorCustomizer(c -> c.withContentModifier(
+					new FileLinesContentModifier()
 					{
-						return "pom.xml".equals(targetPath);
+						@Override
+						public boolean shouldApply(
+							final Path sourcePath,
+							final String targetPath,
+							final TarArchiveEntry tarArchiveEntry)
+						{
+							return "pom.xml".equals(targetPath);
+						}
+						
+						@Override
+						public List<String> modify(
+							final List<String> lines,
+							final Path sourcePath,
+							final String targetPath,
+							final TarArchiveEntry tarArchiveEntry)
+						{
+							return lines.stream()
+								// Only keep the dummy-app submodule as this is only needed for building
+								.filter(s -> !(s.contains("<module>testcontainers-advanced-imagebuilder")
+									&& !s.contains("<module>testcontainers-advanced-imagebuilder-dummy-app")))
+								.toList();
+						}
+						
+						@Override
+						public boolean isIdentical(final List<String> original, final List<String> created)
+						{
+							return original.size() == created.size();
+						}
 					}
-					
-					@Override
-					public List<String> modify(
-						final List<String> lines,
-						final Path sourcePath,
-						final String targetPath,
-						final TarArchiveEntry tarArchiveEntry)
-					{
-						return lines.stream()
-							// Only keep the dummy-app submodule as this is only needed for building
-							.filter(s -> !(s.contains("<module>testcontainers-advanced-imagebuilder")
-								&& !s.contains("<module>testcontainers-advanced-imagebuilder-dummy-app")))
-							.toList();
-					}
-					
-					@Override
-					public boolean isIdentical(final List<String> original, final List<String> created)
-					{
-						return original.size() == created.size();
-					}
-				}
-			));
+				))
+			);
 		
-		Assertions.assertDoesNotThrow(() -> builder.get(5, TimeUnit.MINUTES));
+		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
+		
+		assertDoesNotThrow(() -> builder
+			.copyForIntermediateTag("dynamically-built-builder", "builder")
+			.build(Duration.ofMinutes(1)));
+		
+		assertDoesNotThrow(builder::cleanCreatedTransferFilesCache);
 	}
 }
