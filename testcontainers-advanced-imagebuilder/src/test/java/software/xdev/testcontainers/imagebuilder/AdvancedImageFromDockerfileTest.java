@@ -108,7 +108,7 @@ class AdvancedImageFromDockerfileTest
 		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
 		
 		assertDoesNotThrow(() -> builder
-			.copyForIntermediateTag("dynamically-built-builder", "builder")
+			.copyForIntermediateTag("builder")
 			.build(Duration.ofMinutes(1)));
 		
 		assertDoesNotThrow(builder::cleanCreatedTransferFilesCache);
