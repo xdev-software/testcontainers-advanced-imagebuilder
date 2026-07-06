@@ -92,7 +92,12 @@ import software.xdev.testcontainers.imagebuilder.transfer.fcm.DockerFileContentM
  * @author AB
  * @see org.testcontainers.images.builder.ImageFromDockerfile
  */
-@SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "PMD.GodClass", "PMD.MoreThanOneLogger"})
+@SuppressWarnings({
+	"OptionalUsedAsFieldOrParameterType",
+	"PMD.GodClass",
+	"PMD.MoreThanOneLogger",
+	"java:S1133"
+})
 public class AdvancedImageFromDockerFile
 	extends LazyFuture<String>
 	implements
@@ -325,6 +330,7 @@ public class AdvancedImageFromDockerFile
 		state.setExternalDependencyImageNames(externalDependencyImageNames);
 	}
 	
+	@SuppressWarnings("java:S2095")
 	protected InputStream createTarInputStream(final Path baseDir)
 	{
 		if(this.transferFileCache != null)
@@ -604,7 +610,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withBaseDirRelativeIgnoreFile(final Path baseDirRelativeIgnoreFile)
 	{
 		this.filesToTransferHandler.withBaseDirRelativeIgnoreFile(baseDirRelativeIgnoreFile);
@@ -614,7 +620,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withPreGitIgnoreLines(final String... preGitIgnoreLines)
 	{
 		this.filesToTransferHandler.withPreGitIgnoreLines(preGitIgnoreLines);
@@ -624,7 +630,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withIgnoreFileLineFilter(final Predicate<String> ignoreFileLineFilter)
 	{
 		this.filesToTransferHandler.withIgnoreFileLineFilter(ignoreFileLineFilter);
@@ -634,7 +640,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withPostGitIgnoreLines(final String... postGitIgnoreLines)
 	{
 		this.filesToTransferHandler.withPostGitIgnoreLines(postGitIgnoreLines);
@@ -644,7 +650,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withAlwaysTransferRelativPaths(final Set<String> alwaysTransferPaths)
 	{
 		this.filesToTransferHandler.withAlwaysTransferRelativPaths(alwaysTransferPaths);
@@ -654,7 +660,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withAlwaysTransferDockerfilePath(final boolean alwaysTransferDockerfilePath)
 	{
 		this.filesToTransferHandler.withAlwaysTransferDockerfilePath(alwaysTransferDockerfilePath);
@@ -664,7 +670,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withTransferFilesCreatorSupplier(
 		final BiFunction<Path, Path, TransferFilesCreator> transferFilesCreatorSupplier)
 	{
@@ -675,7 +681,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withTransferArchiveTARCompressor(
 		final TransferArchiveTARCompressor transferArchiveTARCompressor)
 	{
@@ -686,7 +692,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withTransferArchiveTARCompressorCustomizer(
 		final Consumer<TransferArchiveTARCompressor> customizer)
 	{
@@ -697,7 +703,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withDockerFileContentModifierSupplier(
 		final TriFunction<Path, List<DockerFileLineModifier>, Collection<String>, DockerFileContentModifier>
 			dockerFileContentModifierSupplier)
@@ -709,7 +715,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withDockerFileLinesModifier(
 		final DockerFileLineModifier dockerFileLinesModifier)
 	{
@@ -720,7 +726,7 @@ public class AdvancedImageFromDockerFile
 	/**
 	 * @deprecated Use {@link #configureFilesToTransferHandler(Consumer)}
 	 */
-	@Deprecated
+	@Deprecated(since = "3.0.0")
 	public AdvancedImageFromDockerFile withUseWinNTFSJunctionFixIfApplicable(
 		final boolean useWinNTFSJunctionFixIfApplicable)
 	{
