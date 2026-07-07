@@ -16,6 +16,7 @@
 
 	<modules>
 		<module>testcontainers-advanced-imagebuilder</module>
+		<module>testcontainers-advanced-imagebuilder-docker-rpc</module>
 		<module>testcontainers-advanced-imagebuilder-dummy-app</module>
 		<module>testcontainers-advanced-imagebuilder-demo</module>
 	</modules>
