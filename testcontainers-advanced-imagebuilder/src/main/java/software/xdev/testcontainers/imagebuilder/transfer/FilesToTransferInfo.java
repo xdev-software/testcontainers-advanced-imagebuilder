@@ -15,25 +15,18 @@
  */
 package software.xdev.testcontainers.imagebuilder.transfer;
 
-import java.nio.file.Path;
+import java.io.File;
+import java.io.InputStream;
 
 
-/**
- * Fork of {@link org.testcontainers.shaded.com.github.dockerjava.core.util.FilePathUtil} to improve performance
- */
-public final class FastFilePathRelativzer
+public interface FilesToTransferInfo extends AutoCloseable
 {
-	// Original code uses Path.toURI() or similar code for file which is extremely slow (150x) because
-	// it queries the file attributes for each file (on Windows)
-	public static String relativize(final Path baseDir, final Path file)
-	{
-		final String path = baseDir.relativize(file).toString();
-		return !"/".equals(baseDir.getFileSystem().getSeparator())
-			? path.replace(baseDir.getFileSystem().getSeparator(), "/")
-			: path;
-	}
+	File source();
 	
-	private FastFilePathRelativzer()
-	{
-	}
+	InputStream filesToTransfer();
+	
+	void reportConsumed();
+	
+	@Override
+	void close();
 }

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class TransferArchiveTARCompressor
 	
 	public File archiveTARFiles(
 		final Map<Path, String> filesToTransfer,
-		final String archiveNameWithOutExtension) throws IOException
+		final String archiveNameWithOutExtension)
 	{
 		final File tarFile = new File(FileUtils.getTempDirectoryPath(), archiveNameWithOutExtension + ".tar");
 		tarFile.deleteOnExit();
@@ -68,6 +69,10 @@ public class TransferArchiveTARCompressor
 			{
 				this.addFileToTar(tos, fileData.getKey(), fileData.getValue());
 			}
+		}
+		catch(final IOException ioe)
+		{
+			throw new UncheckedIOException(ioe);
 		}
 		
 		return tarFile;
@@ -91,7 +96,7 @@ public class TransferArchiveTARCompressor
 			}
 			
 			final TarArchiveEntry tarArchiveEntry =
-				(TarArchiveEntry)tarArchiveOutputStream.createArchiveEntry(sourePath.toFile(), targetPath);
+				tarArchiveOutputStream.createArchiveEntry(sourePath.toFile(), targetPath);
 			if(sourePath.toFile().canExecute())
 			{
 				tarArchiveEntry.setMode(tarArchiveEntry.getMode() | 493);

@@ -16,20 +16,24 @@
 package software.xdev.testcontainers.imagebuilder.transfer;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 
-class FastFilePathRelativzerTest
+/**
+ * Fork of {@link org.testcontainers.shaded.com.github.dockerjava.core.util.FilePathUtil} to improve performance
+ */
+public final class FastFilePathRelativizer
 {
-	@Test
-	void sanityCheck()
+	// Original code uses Path.toURI() or similar code for file which is extremely slow (150x) because
+	// it queries the file attributes for each file (on Windows)
+	public static String relativize(final Path baseDir, final Path file)
 	{
-		final Path baseDir = Paths.get("..", "..");
-		final Path path = Paths.get("..", "..", "a", "b");
-		final String relativePath = FastFilePathRelativzer.relativize(baseDir, path);
-		Assertions.assertEquals("a/b", relativePath);
+		final String path = baseDir.relativize(file).toString();
+		return !"/".equals(baseDir.getFileSystem().getSeparator())
+			? path.replace(baseDir.getFileSystem().getSeparator(), "/")
+			: path;
+	}
+	
+	private FastFilePathRelativizer()
+	{
 	}
 }

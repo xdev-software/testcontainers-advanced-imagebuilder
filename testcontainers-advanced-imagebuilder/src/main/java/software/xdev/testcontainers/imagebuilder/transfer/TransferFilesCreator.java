@@ -30,7 +30,7 @@ public interface TransferFilesCreator
 		Set<String> alwaysIncludedRelativePaths,
 		boolean useWinNTFSJunctionFixIfApplicable);
 	
-	FilesToTransferInputStreamFactory getAllFilesToTransferAsTarInputStreamFactory(
+	FilesToTransferInfo getAllFilesToTransferAsTarInputStreamFactory(
 		Map<Path, String> filesToTransfer,
 		TransferArchiveTARCompressor transferArchiveTARCompressor,
 		boolean immediatelyFreeUpWhenReadFinished);
