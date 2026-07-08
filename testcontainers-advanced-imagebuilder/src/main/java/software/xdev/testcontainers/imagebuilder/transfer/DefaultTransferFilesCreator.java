@@ -184,7 +184,7 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 		final Path file,
 		final Map<String, Boolean> cachedDirectoryOutcome)
 	{
-		final String relativePath = FastFilePathRelativzer.relativize(this.baseDir, file);
+		final String relativePath = FastFilePathRelativizer.relativize(this.baseDir, file);
 		
 		// Initial file check
 		final Optional<Map.Entry<Path, String>> outcomeFile = this.shouldIgnore(
@@ -290,41 +290,60 @@ public class DefaultTransferFilesCreator implements TransferFilesCreator
 	
 	@Override
 	@SuppressWarnings({"java:S2095"}) // Can't close an InputStream that is returned...
-	public FilesToTransferInputStreamFactory getAllFilesToTransferAsTarInputStreamFactory(
+	public FilesToTransferInfo getAllFilesToTransferAsTarInputStreamFactory(
 		final Map<Path, String> filesToTransfer,
 		final TransferArchiveTARCompressor transferArchiveTARCompressor,
 		final boolean immediatelyFreeUpWhenReadFinished)
 	{
-		File dockerFolderTar = null;
-		try
+		final File dockerFolderTar = transferArchiveTARCompressor.archiveTARFiles(
+			filesToTransfer,
+			UUID.randomUUID().toString());
+		return new DefaultFilesToTransferInfo(
+			dockerFolderTar,
+			immediatelyFreeUpWhenReadFinished
+		);
+	}
+	
+	protected static class DefaultFilesToTransferInfo
+		implements FilesToTransferInfo
+	{
+		protected final File tar;
+		protected final boolean immediatelyFreeUpWhenReadFinished;
+		
+		protected DefaultFilesToTransferInfo(final File tar, final boolean immediatelyFreeUpWhenReadFinished)
 		{
-			dockerFolderTar = transferArchiveTARCompressor.archiveTARFiles(
-				filesToTransfer,
-				UUID.randomUUID().toString());
-			final File dockerFolderTarInner = dockerFolderTar;
-			
-			return new FilesToTransferInputStreamFactory()
-			{
-				@Override
-				public InputStream filesToTransfer()
-				{
-					return new WrappedTarInputStream(dockerFolderTarInner, immediatelyFreeUpWhenReadFinished);
-				}
-				
-				@Override
-				public void close()
-				{
-					if(!immediatelyFreeUpWhenReadFinished)
-					{
-						FileUtils.deleteQuietly(dockerFolderTarInner);
-					}
-				}
-			};
+			this.tar = tar;
+			this.immediatelyFreeUpWhenReadFinished = immediatelyFreeUpWhenReadFinished;
 		}
-		catch(final IOException ioe)
+		
+		@Override
+		public File source()
 		{
-			FileUtils.deleteQuietly(dockerFolderTar);
-			throw new UncheckedIOException(ioe);
+			return this.tar;
+		}
+		
+		@Override
+		public InputStream filesToTransfer()
+		{
+			return new WrappedTarInputStream(this.tar, this.immediatelyFreeUpWhenReadFinished);
+		}
+		
+		@Override
+		public void reportConsumed()
+		{
+			if(this.immediatelyFreeUpWhenReadFinished)
+			{
+				FileUtils.deleteQuietly(this.tar);
+			}
+		}
+		
+		@Override
+		public void close()
+		{
+			if(!this.immediatelyFreeUpWhenReadFinished)
+			{
+				FileUtils.deleteQuietly(this.tar);
+			}
 		}
 	}
 	

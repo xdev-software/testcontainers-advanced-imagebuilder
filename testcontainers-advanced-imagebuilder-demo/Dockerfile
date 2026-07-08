@@ -3,6 +3,10 @@
 ARG JAVA_VERSION=25
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS builder
 
+# This is only there for tests so that the image is not cached in between tests
+ARG CACHE_BUSTER=
+RUN echo "$CACHE_BUSTER"
+
 RUN apk add --no-cache bash
 
 WORKDIR /build
