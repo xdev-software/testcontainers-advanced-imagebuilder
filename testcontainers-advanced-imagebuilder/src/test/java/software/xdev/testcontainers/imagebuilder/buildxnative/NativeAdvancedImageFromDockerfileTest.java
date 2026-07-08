@@ -21,6 +21,8 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import software.xdev.testcontainers.imagebuilder.AbstractBuildTest;
 
@@ -40,6 +42,7 @@ class NativeAdvancedImageFromDockerfileTest extends AbstractBuildTest
 		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
 	}
 	
+	@DisabledOnOs(OS.WINDOWS) // Has no effect on Windows
 	@Test
 	void checkGitHubCaching()
 	{
