@@ -17,90 +17,42 @@ package software.xdev.testcontainers.imagebuilder.buildxnative;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.List;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.DockerClientFactory;
 
-import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentModifier;
+import software.xdev.testcontainers.imagebuilder.AbstractBuildTest;
 
 
-class NativeAdvancedImageFromDockerfileTest
+class NativeAdvancedImageFromDockerfileTest extends AbstractBuildTest
 {
 	// Not it can't be written as a method reference (same method name)
-	@SuppressWarnings("java:S1612")
 	@Test
 	void simpleCheck()
 	{
-		try
+		this.checkIfDockerIsPresentOrAbort();
+		
+		final NativeAdvancedImageFromDockerfile builder = this.configureDefault(
+			new NativeAdvancedImageFromDockerfile("dynamically-built"));
+		
+		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
+	}
+	
+	@Test
+	void checkGitHubCaching()
+	{
+		if(System.getenv("GITHUB_ACTIONS") == null)
 		{
-			// noinspection resource
-			DockerClientFactory.instance().client();
-		}
-		catch(final IllegalStateException iex)
-		{
-			Assumptions.abort("Failed to find docker environment: " + iex.getMessage());
+			Assumptions.abort("Not running on GitHub Actions");
 		}
 		
-		final NativeAdvancedImageFromDockerfile builder = new NativeAdvancedImageFromDockerfile("dynamically-built")
-			.withLoggerForBuild(LoggerFactory.getLogger("container.build"))
-			.withDockerFilePath(Paths.get("../testcontainers-advanced-imagebuilder-demo/Dockerfile"))
-			.withBaseDir(Paths.get("../"))
-			.configureFilesToTransferHandler(h -> h
-				.withPostGitIgnoreLines(
-					// Ignore files that aren't related to the built code
-					".git/**",
-					".config/**",
-					".github/**",
-					".idea/**",
-					".run/**",
-					"*.md",
-					"*.cmd",
-					"/renovate.json5",
-					"testcontainers-advanced-imagebuilder/**",
-					"testcontainers-advanced-imagebuilder-demo/**"
-				)
-				// Only copy the required maven modules and remove the not required ones
-				.withTransferArchiveTARCompressorCustomizer(c -> c.withContentModifier(
-					new FileLinesContentModifier()
-					{
-						@Override
-						public boolean shouldApply(
-							final Path sourcePath,
-							final String targetPath,
-							final TarArchiveEntry tarArchiveEntry)
-						{
-							return "pom.xml".equals(targetPath);
-						}
-						
-						@Override
-						public List<String> modify(
-							final List<String> lines,
-							final Path sourcePath,
-							final String targetPath,
-							final TarArchiveEntry tarArchiveEntry)
-						{
-							return lines.stream()
-								// Only keep the dummy-app submodule as this is only needed for building
-								.filter(s -> !(s.contains("<module>testcontainers-advanced-imagebuilder")
-									&& !s.contains("<module>testcontainers-advanced-imagebuilder-dummy-app")))
-								.toList();
-						}
-						
-						@Override
-						public boolean isIdentical(final List<String> original, final List<String> created)
-						{
-							return original.size() == created.size();
-						}
-					}
-				))
-			);
+		this.checkIfDockerIsPresentOrAbort();
+		
+		final NativeAdvancedImageFromDockerfile builder = this.configureDefault(
+				new NativeAdvancedImageFromDockerfile("dynamically-built-gha"))
+			.withCacheFrom("type=gha,scope=test-native-gha-1")
+			.withCacheTo("type=gha,mode=max,scope=test-native-gha-1");
 		
 		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
 	}

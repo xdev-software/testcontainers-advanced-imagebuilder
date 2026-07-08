@@ -43,7 +43,7 @@ import software.xdev.testcontainers.imagebuilder.transfer.FilesToTransferInfo;
  * Disadvantages:
  *     <ul>
  *         <li>buildx/buildkit is required locally</li>
- *         <li>Authentification (if required) needs to be done manually</li>
+ *         <li>Authentication (if required) needs to be done manually</li>
  *         <li>External process might not be fully controllable e.g. on JVM crash</li>
  *         <li>No (type-safe) API</li>
  *     </ul>

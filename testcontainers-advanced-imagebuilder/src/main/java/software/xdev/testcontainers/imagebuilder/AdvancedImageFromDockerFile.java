@@ -259,11 +259,22 @@ public class AdvancedImageFromDockerFile
 		state.setExternalDependencyImageNames(externalDependencyImageNames);
 	}
 	
+	/**
+	 * @see #copyForIntermediateTag(String, String)
+	 */
 	public AdvancedImageFromDockerFile copyForIntermediateTag(final String target)
 	{
 		return this.copyForIntermediateTag(this.dockerImageName + "-" + target, target);
 	}
 	
+	/**
+	 * Creates a copy to create an intermediate tag.
+	 * <p>
+	 * It's recommended to use
+	 * {@link software.xdev.testcontainers.imagebuilder.buildxnative.NativeAdvancedImageFromDockerfile}
+	 * instead as it provides better caching options.
+	 * </p>
+	 */
 	public AdvancedImageFromDockerFile copyForIntermediateTag(
 		final String dockerImageName, final String target)
 	{
