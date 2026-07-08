@@ -3,6 +3,9 @@
 ARG JAVA_VERSION=25
 FROM eclipse-temurin:$JAVA_VERSION-jdk-alpine AS builder
 
+ARG CACHE_BUSTER=
+RUN echo "$CACHE_BUSTER"
+
 RUN apk add --no-cache bash
 
 WORKDIR /build

@@ -34,7 +34,8 @@ class NativeAdvancedImageFromDockerfileTest extends AbstractBuildTest
 		this.checkIfDockerIsPresentOrAbort();
 		
 		final NativeAdvancedImageFromDockerfile builder = this.configureDefault(
-			new NativeAdvancedImageFromDockerfile("dynamically-built"));
+				new NativeAdvancedImageFromDockerfile("dynamically-built"))
+			.withBuildArg("CACHE_BUSTER", "native-simpleCheck");
 		
 		assertDoesNotThrow(() -> builder.build(Duration.ofMinutes(5)));
 	}
@@ -51,6 +52,7 @@ class NativeAdvancedImageFromDockerfileTest extends AbstractBuildTest
 		
 		final NativeAdvancedImageFromDockerfile builder = this.configureDefault(
 				new NativeAdvancedImageFromDockerfile("dynamically-built-gha"))
+			.withBuildArg("CACHE_BUSTER", "native-checkGitHubCaching")
 			.withCacheFrom("type=gha,scope=test-native-gha-1")
 			.withCacheTo("type=gha,mode=max,scope=test-native-gha-1");
 		
