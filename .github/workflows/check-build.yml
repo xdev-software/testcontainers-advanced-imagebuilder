@@ -48,11 +48,24 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-mvn-build-
 
+    # These are required for caching 
+    # https://docs.docker.com/build/cache/backends/gha/#authentication
+    - name: Get Actions Runtime credentials
+      id: actions-vars
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        script: |
+          core.setOutput('ACTIONS_RUNTIME_TOKEN', process.env['ACTIONS_RUNTIME_TOKEN'])
+          core.setOutput('ACTIONS_RESULTS_URL', process.env['ACTIONS_RESULTS_URL'])
+
     - uses: docker/setup-buildx-action@v4
       if: matrix.os != 'windows-latest'
 
     - name: Build with Maven
       run: ./mvnw -B clean package -P run-integration-tests -T2C
+      env:
+        ACTIONS_RUNTIME_TOKEN: ${{ steps.actions-vars.outputs.ACTIONS_RUNTIME_TOKEN }}
+        ACTIONS_RESULTS_URL: ${{ steps.actions-vars.outputs.ACTIONS_RESULTS_URL }}
 
     - name: Check for uncommited changes
       shell: bash

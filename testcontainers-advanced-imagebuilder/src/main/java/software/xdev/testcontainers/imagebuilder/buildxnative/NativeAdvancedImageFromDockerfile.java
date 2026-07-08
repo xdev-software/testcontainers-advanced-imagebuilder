@@ -190,8 +190,7 @@ public class NativeAdvancedImageFromDockerfile
 				.filter(relativePath -> !"Dockerfile".equalsIgnoreCase(relativePath))
 		);
 		
-		// TODO - DEBUG
-		this.log().info("Resolved arguments: {}", cmdArgs);
+		this.log().debug("Resolved arguments: {}", cmdArgs);
 		
 		final ProcessBuilder pb = new ProcessBuilder(cmdArgs);
 		pb.directory(tempWorkingDir);
