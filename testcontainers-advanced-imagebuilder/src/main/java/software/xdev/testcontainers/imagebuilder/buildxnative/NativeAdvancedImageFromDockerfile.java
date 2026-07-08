@@ -70,10 +70,11 @@ import software.xdev.testcontainers.imagebuilder.transfer.FilesToTransferInfo;
 public class NativeAdvancedImageFromDockerfile
 	extends AbstractImageFromDockerfile<NativeAdvancedImageFromDockerfile>
 {
-	protected List<String> baseCommand = List.of("docker", "build");
+	protected List<String> baseCommand = List.of("docker", "buildx", "build");
 	protected List<String> additionalArgs = new ArrayList<>();
 	protected Optional<String> optCacheFrom = Optional.empty();
 	protected Optional<String> optCacheTo = Optional.empty();
+	protected boolean load = true;
 	
 	protected Duration timeout = Duration.ofMinutes(5);
 	
@@ -108,11 +109,17 @@ public class NativeAdvancedImageFromDockerfile
 			.filter(Optional::isPresent)
 			.mapToInt(o -> 2)
 			.sum()
+			+ (this.load ? 1 : 0)
 		);
 		
 		commandArgs.addAll(this.baseCommand);
 		
 		this.addCommandArg(optDockerFilePath, "-f", commandArgs);
+		
+		if(this.load)
+		{
+			commandArgs.add("--load");
+		}
 		
 		this.addCommandArg(this.optTarget, "--target", commandArgs);
 		this.addCommandArg(this.optCacheFrom, "--cache-from", commandArgs);
@@ -307,6 +314,12 @@ public class NativeAdvancedImageFromDockerfile
 	public NativeAdvancedImageFromDockerfile withCacheTo(final String cacheTo)
 	{
 		this.optCacheTo = Optional.ofNullable(cacheTo);
+		return this;
+	}
+	
+	public NativeAdvancedImageFromDockerfile withLoad(final boolean load)
+	{
+		this.load = load;
 		return this;
 	}
 	
