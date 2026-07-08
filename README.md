@@ -17,7 +17,7 @@ A re-implementation of [Testcontainers Image-Builder](https://java.testcontainer
 * Makes logger non generic and therefore controllable
 * Some general code cleanup and performance improvements
 
-Alternatively you can also directly with the CLI ([`docker buildx build`](https://docs.docker.com/reference/cli/docker/buildx/build/)) using `NativeAdvancedImageFromDockerfile`.
+Alternatively you can also build using the [Docker CLI](https://docs.docker.com/reference/cli/docker/buildx/build/) utilizing `NativeAdvancedImageFromDockerfile`.
 
 For more details have a look at [the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java).<br/>The demo showcases how an image for another application in the same repo can be built.
 
