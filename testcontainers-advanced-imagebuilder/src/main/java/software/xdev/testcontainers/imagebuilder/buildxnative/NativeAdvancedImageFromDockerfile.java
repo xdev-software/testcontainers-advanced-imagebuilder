@@ -182,13 +182,18 @@ public class NativeAdvancedImageFromDockerfile
 		this.log().info("Starting building image[name='{}']", this.dockerImageName);
 		final long buildStartTime = System.currentTimeMillis();
 		
-		final ProcessBuilder pb = new ProcessBuilder(this.buildCommand(
+		final List<String> cmdArgs = this.buildCommand(
 			this.optDockerFilePath
 				.map(dockerFilePath -> FastFilePathRelativizer.relativize(
 					this.optBaseDir.orElse(dockerFilePath.getParent()),
 					dockerFilePath))
 				.filter(relativePath -> !"Dockerfile".equalsIgnoreCase(relativePath))
-		));
+		);
+		
+		// TODO - DEBUG
+		this.log().info("Resolved arguments: {}", cmdArgs);
+		
+		final ProcessBuilder pb = new ProcessBuilder(cmdArgs);
 		pb.directory(tempWorkingDir);
 		pb.redirectInput(filesToTransferInfo.source());
 		pb.redirectErrorStream(true);
