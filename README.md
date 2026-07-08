@@ -5,17 +5,19 @@
 
 A re-implementation of [Testcontainers Image-Builder](https://java.testcontainers.org/features/creating_images/) with the following improvements:
 * Allows passing a custom logger to the image build - [testcontainers-java#3093](https://github.com/testcontainers/testcontainers-java/issues/3093)
-* Allows using ``ARG``s for ``FROM`` - [testcontainers-java#3238](https://github.com/testcontainers/testcontainers-java/issues/3238)
+* Allows using `ARG`s for `FROM` - [testcontainers-java#3238](https://github.com/testcontainers/testcontainers-java/issues/3238)
 * Brings a custom [build-context](https://docs.docker.com/build/building/context/) processor
   * Works more efficient and reliable than the default implementation because it utilizes [JGit](https://github.com/eclipse-jgit/jgit)
-  * uses the ``.gitignore`` if available
+  * uses the `.gitignore` if available
   * Allows adding custom ignores
     * This way the build-context can be fine tuned in a way that the build cache works very efficiently (e.g. only re-built when actual code that matters changes)
   * Makes it possible to modify files that are transferred
-* Provide a compatibility layer to emulate [``COPY --parents``](https://docs.docker.com/reference/dockerfile/#copy---parents) (which is currently not supported by Docker out of the box)
+* Provide a compatibility layer to emulate [`COPY --parents`](https://docs.docker.com/reference/dockerfile/#copy---parents) (which is currently not supported by Docker out of the box)
 * Do not pull images that are declared inside the Dockerfile
 * Makes logger non generic and therefore controllable
 * Some general code cleanup and performance improvements
+
+Alternatively you can also directly with the CLI ([`docker buildx build`](https://docs.docker.com/reference/cli/docker/buildx/build/)) using `NativeAdvancedImageFromDockerfile`.
 
 For more details have a look at [the demo](./testcontainers-advanced-imagebuilder-demo/src/main/java/software/xdev/Application.java).<br/>The demo showcases how an image for another application in the same repo can be built.
 
