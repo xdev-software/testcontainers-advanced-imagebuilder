@@ -1,34 +1,56 @@
-package software.xdev;
+/*
+ * Copyright © 2024 XDEV Software (https://xdev.software)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package software.xdev.testcontainers.imagebuilder;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.List;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.junit.jupiter.api.Assumptions;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.DockerClientFactory;
 
-import software.xdev.testcontainers.imagebuilder.AdvancedImageFromDockerFile;
 import software.xdev.testcontainers.imagebuilder.compat.DockerfileCOPYParentsEmulator;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentModifier;
 
 
-public final class Application
+public abstract class AbstractBuildTest
 {
-	@SuppressWarnings({
-		"java:S106",
-		"java:S4507",
-		"PMD.SystemPrintln",
-		"PMD.AvoidPrintStackTrace"
-	}) // Just a demo
-	public static void main(final String[] args)
+	protected void checkIfDockerIsPresentOrAbort()
 	{
-		final AdvancedImageFromDockerFile builder = new AdvancedImageFromDockerFile("dynamically-built")
+		try
+		{
+			// noinspection resource
+			DockerClientFactory.instance().client();
+		}
+		catch(final IllegalStateException iex)
+		{
+			Assumptions.abort("Failed to find docker environment: " + iex.getMessage());
+		}
+	}
+	
+	protected <I extends AbstractImageFromDockerfile<I>> I configureDefault(final I builder)
+	{
+		return builder
 			.withLoggerForBuild(LoggerFactory.getLogger("container.build"))
 			.withDockerFilePath(Paths.get("../testcontainers-advanced-imagebuilder-demo/Dockerfile"))
 			.withBaseDir(Paths.get("../"))
+			.withCreateTransferFilesCache(true)
 			.configureFilesToTransferHandler(h -> h
-				.withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
 				.withPostGitIgnoreLines(
 					// Ignore files that aren't related to the built code
 					".git/**",
@@ -36,12 +58,13 @@ public final class Application
 					".github/**",
 					".idea/**",
 					".run/**",
-					".md",
-					".cmd",
+					"*.md",
+					"*.cmd",
 					"/renovate.json5",
 					"testcontainers-advanced-imagebuilder/**",
 					"testcontainers-advanced-imagebuilder-demo/**"
 				)
+				.withDockerFileLinesModifier(new DockerfileCOPYParentsEmulator())
 				// Only copy the required maven modules and remove the not required ones
 				.withTransferArchiveTARCompressorCustomizer(c -> c.withContentModifier(
 					new FileLinesContentModifier()
@@ -77,20 +100,5 @@ public final class Application
 					}
 				))
 			);
-		
-		try
-		{
-			final String imageName = builder.build(Duration.ofMinutes(5));
-			System.out.println("Successfully build " + imageName);
-		}
-		catch(final Exception e)
-		{
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-	
-	private Application()
-	{
 	}
 }

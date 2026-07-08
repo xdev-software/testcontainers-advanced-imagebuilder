@@ -1,3 +1,19 @@
+# 4.0.0
+* Add `NativeAdvancedImageFromDockerfile`
+  * Builds the image using a new `docker build` process
+  * Runs isolated of Testcontainers / does not directly utilize Docker API
+  * Comparison to `AdvancedImageFromDockerFile`
+    * Advantages
+      * Full buildx/buildkit support
+      * Caching can easily be implemented (using --cache-to and --cache-from)
+    * Disadvantages
+      * buildx/buildkit is required locally
+      * Authentication (if required) needs to be done manually
+      * External process might not be fully controllable e.g. on JVM crash
+      * No (type-safe) API
+* Abstracted common code of `NativeAdvancedImageFromDockerfile` and `AdvancedImageFromDockerfile`
+* Minor performance improvements
+
 # 3.0.1
 * Add overload for `copyForIntermediateTag`
 

@@ -53,7 +53,7 @@ public class FilesToTransferHandler
 	protected List<DockerFileLineModifier> dockerFileLinesModifiers = new ArrayList<>();
 	protected boolean useWinNTFSJunctionFixIfApplicable;
 	
-	public FilesToTransferInputStreamFactory create(
+	public FilesToTransferInfo create(
 		final Logger log,
 		final Path baseDir,
 		final Path dockerFilePath,
@@ -68,7 +68,7 @@ public class FilesToTransferHandler
 		final Set<String> alwaysIncludePaths = new HashSet<>(this.alwaysTransferRelativePaths);
 		if(this.alwaysTransferDockerfilePath)
 		{
-			alwaysIncludePaths.add(FastFilePathRelativzer.relativize(baseDir, dockerFilePath));
+			alwaysIncludePaths.add(FastFilePathRelativizer.relativize(baseDir, dockerFilePath));
 		}
 		
 		final long startTransferMs = System.currentTimeMillis();
@@ -95,7 +95,7 @@ public class FilesToTransferHandler
 			filesToTransfer.forEach((a, r) -> log.debug("Will transmit: '{}' -> '{}'", a, r));
 		}
 		
-		log.info("Building FilesToTransferInputStreamFactory with docker-context...");
+		log.info("Building FilesToTransferInfo with docker-context...");
 		final long startInputStreamBuildMs = System.currentTimeMillis();
 		
 		if(!this.dockerFileLinesModifiers.isEmpty())
@@ -117,14 +117,14 @@ public class FilesToTransferHandler
 			this.transferArchiveTARCompressorCustomizer.accept(this.transferArchiveTARCompressor);
 		}
 		
-		final FilesToTransferInputStreamFactory factory =
+		final FilesToTransferInfo factory =
 			tfc.getAllFilesToTransferAsTarInputStreamFactory(
 				filesToTransfer,
 				this.transferArchiveTARCompressor,
 				immediatelyFreeUpWhenReadFinished);
 		
 		log.info(
-			"Built FilesToTransferInputStreamFactory, took {}ms",
+			"Built FilesToTransferInfo, took {}ms",
 			System.currentTimeMillis() - startInputStreamBuildMs);
 		
 		return factory;

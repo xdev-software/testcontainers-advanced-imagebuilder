@@ -15,13 +15,21 @@
  */
 package software.xdev.testcontainers.imagebuilder.transfer;
 
-import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 
-public interface FilesToTransferInputStreamFactory extends AutoCloseable
+class FastFilePathRelativizerTest
 {
-	InputStream filesToTransfer();
-	
-	@Override
-	void close();
+	@Test
+	void sanityCheck()
+	{
+		final Path baseDir = Paths.get("..", "..");
+		final Path path = Paths.get("..", "..", "a", "b");
+		final String relativePath = FastFilePathRelativizer.relativize(baseDir, path);
+		Assertions.assertEquals("a/b", relativePath);
+	}
 }
