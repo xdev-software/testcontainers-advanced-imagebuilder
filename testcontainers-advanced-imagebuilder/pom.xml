@@ -205,6 +205,10 @@
 				<version>3.5.6</version>
 				<configuration>
 					<skipTests>${skipTests}</skipTests>
+					<!-- Only required on < Java 26 on Windows NTFS -->
+					<argLine>
+						--add-exports java.base/sun.nio.fs=ALL-UNNAMED
+					</argLine>
 				</configuration>
 			</plugin>
 		</plugins>
