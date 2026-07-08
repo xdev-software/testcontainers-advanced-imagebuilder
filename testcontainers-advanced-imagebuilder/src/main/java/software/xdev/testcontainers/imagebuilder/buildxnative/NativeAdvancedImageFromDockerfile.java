@@ -30,6 +30,24 @@ import software.xdev.testcontainers.imagebuilder.transfer.FilesToTransferInfo;
  * <p>
  * Please note that the build process is running completely isolated of Testcontainers.
  * </p>
+ * <h4>Comparison to {@link software.xdev.testcontainers.imagebuilder.AdvancedImageFromDockerFile
+ * AdvancedImageFromDockerFile}</h4>
+ * <p>
+ * Advantages:
+ * <ul>
+ *     <li>Full buildx/buildkit support</li>
+ *     <li>Caching can easily be implemented (using --cache-to and --cache-from)</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Disadvantages:
+ *     <ul>
+ *         <li>buildx/buildkit is required locally</li>
+ *         <li>Authentification (if required) needs to be done manually</li>
+ *         <li>External process might not be fully controllable e.g. on JVM crash</li>
+ *         <li>No (type-safe) API</li>
+ *     </ul>
+ * </p>
  * <p>
  * <a href="https://docs.docker.com/reference/cli/docker/buildx/build/">Docker Docs</a>
  * </p>
@@ -39,6 +57,8 @@ public class NativeAdvancedImageFromDockerfile
 {
 	protected List<String> baseCommand = List.of("docker", "build");
 	protected List<String> additionalArgs = new ArrayList<>();
+	protected Optional<String> optCacheFrom = Optional.empty();
+	protected Optional<String> optCacheTo = Optional.empty();
 	
 	protected Duration timeout = Duration.ofMinutes(5);
 	
@@ -69,23 +89,19 @@ public class NativeAdvancedImageFromDockerfile
 		final List<String> commandArgs = new ArrayList<>(16
 			+ this.additionalArgs.size()
 			+ this.buildArgs.size() * 2
-			+ (optDockerFilePath.isPresent() ? 2 : 0)
-			+ (this.optTarget.isPresent() ? 2 : 0)
+			+ Stream.of(optDockerFilePath, this.optTarget, this.optCacheFrom, this.optCacheTo)
+			.filter(Optional::isPresent)
+			.mapToInt(o -> 2)
+			.sum()
 		);
 		
 		commandArgs.addAll(this.baseCommand);
 		
-		optDockerFilePath.ifPresent(path ->
-		{
-			commandArgs.add("-f");
-			commandArgs.add(path);
-		});
+		this.addCommandArg(optDockerFilePath, "-f", commandArgs);
 		
-		this.optTarget.ifPresent(target ->
-		{
-			commandArgs.add("--target");
-			commandArgs.add(target);
-		});
+		this.addCommandArg(this.optTarget, "--target", commandArgs);
+		this.addCommandArg(this.optCacheFrom, "--cache-from", commandArgs);
+		this.addCommandArg(this.optCacheTo, "--cache-to", commandArgs);
 		
 		this.addKVsToCommand(this.createDefaultLabels(), "--label", commandArgs);
 		this.addKVsToCommand(this.buildArgs, "--build-arg", commandArgs);
@@ -99,6 +115,14 @@ public class NativeAdvancedImageFromDockerfile
 		commandArgs.add("-");
 		
 		return commandArgs;
+	}
+	
+	protected void addCommandArg(final Optional<String> optValue, final String key, final List<String> commandArgs)
+	{
+		optValue.ifPresent(val -> {
+			commandArgs.add(key);
+			commandArgs.add(val);
+		});
 	}
 	
 	protected void addKVsToCommand(
@@ -119,6 +143,8 @@ public class NativeAdvancedImageFromDockerfile
 	@Override
 	protected String resolve()
 	{
+		this.log().info("Starting resolving image[name='{}']", this.dockerImageName);
+		
 		final Path baseDir = this.optBaseDir.orElseThrow(() -> new IllegalStateException("baseDir is required"));
 		
 		if(!this.disablePull)
@@ -250,6 +276,18 @@ public class NativeAdvancedImageFromDockerfile
 	public NativeAdvancedImageFromDockerfile withAdditionalArgs(final List<String> args)
 	{
 		this.additionalArgs.addAll(args);
+		return this;
+	}
+	
+	public NativeAdvancedImageFromDockerfile withCacheFrom(final String cacheFrom)
+	{
+		this.optCacheFrom = Optional.ofNullable(cacheFrom);
+		return this;
+	}
+	
+	public NativeAdvancedImageFromDockerfile withCacheTo(final String cacheTo)
+	{
+		this.optCacheTo = Optional.ofNullable(cacheTo);
 		return this;
 	}
 	

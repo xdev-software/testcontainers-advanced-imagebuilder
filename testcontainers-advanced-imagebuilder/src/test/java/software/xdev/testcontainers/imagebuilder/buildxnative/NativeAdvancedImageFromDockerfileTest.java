@@ -31,7 +31,7 @@ import org.testcontainers.DockerClientFactory;
 import software.xdev.testcontainers.imagebuilder.transfer.fcm.FileLinesContentModifier;
 
 
-class AdvancedImageFromDockerfileTest
+class NativeAdvancedImageFromDockerfileTest
 {
 	// Not it can't be written as a method reference (same method name)
 	@SuppressWarnings("java:S1612")
