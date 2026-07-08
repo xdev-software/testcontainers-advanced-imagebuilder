@@ -49,6 +49,7 @@ class NativeAdvancedImageFromDockerfileTest extends AbstractBuildTest
 		if(System.getenv("GITHUB_ACTIONS") == null)
 		{
 			Assumptions.abort("Not running on GitHub Actions");
+			return;
 		}
 		
 		this.checkIfDockerIsPresentOrAbort();
