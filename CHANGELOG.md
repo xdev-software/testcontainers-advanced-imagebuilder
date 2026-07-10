@@ -1,3 +1,6 @@
+# 4.1.2
+* Do not copy logger in `copyForExactRebuild`
+
 # 4.1.1
 * Move `cleanCreatedTransferFilesCache` method to correct place
 

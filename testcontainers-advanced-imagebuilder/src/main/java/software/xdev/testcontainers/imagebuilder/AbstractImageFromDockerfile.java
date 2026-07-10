@@ -286,7 +286,6 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 		
 		final S image = createNewFunc.apply(dockerImageName, this.deleteOnExit)
 			.withBuildArgs(this.buildArgs)
-			.withLoggerForBuild(this.loggerForBuild)
 			.withCreateTransferFilesCache(false)
 			.withTransferFileCache(this.transferFileCache)
 			.withDisablePull(true);
