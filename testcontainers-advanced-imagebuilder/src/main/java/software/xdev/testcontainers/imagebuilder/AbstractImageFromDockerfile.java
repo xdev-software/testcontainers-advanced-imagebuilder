@@ -298,6 +298,15 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 		return image;
 	}
 	
+	public void cleanCreatedTransferFilesCache()
+	{
+		if(this.createTransferFilesCache && this.transferFileCache != null)
+		{
+			this.transferFileCache.close();
+			this.transferFileCache = null;
+		}
+	}
+	
 	// region with
 	
 	public S withLoggerForBuild(final Logger loggerForBuild)

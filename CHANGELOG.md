@@ -1,3 +1,6 @@
+# 4.1.1
+* Move `cleanCreatedTransferFilesCache` method to correct place
+
 # 4.1.0
 * New method `copyForExactRebuild`
 
