@@ -298,15 +298,6 @@ public class AdvancedImageFromDockerFile
 		return this.copyForExactRebuild(dockerImageName).withTarget(target);
 	}
 	
-	public void cleanCreatedTransferFilesCache()
-	{
-		if(this.createTransferFilesCache && this.transferFileCache != null)
-		{
-			this.transferFileCache.close();
-			this.transferFileCache = null;
-		}
-	}
-	
 	// region with
 	
 	public AdvancedImageFromDockerFile withExplicitTransferables(final Map<String, Transferable> transferables)
