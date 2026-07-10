@@ -263,6 +263,41 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 	@Override
 	protected abstract String resolve();
 	
+	/**
+	 * Creates a copy of the image-builder that will build the exact same image.
+	 * <p>
+	 * NOTE: Requires {@link #createTransferFilesCache} to be set to <code>true</code> and an initial build, so that
+	 * {@link #transferFileCache} is seeded.
+	 * </p>
+	 */
+	public abstract S copyForExactRebuild(final String dockerImageName);
+	
+	protected S copyForExactRebuild(final BiFunction<String, Boolean, S> createNewFunc, final String dockerImageName)
+	{
+		if(!this.createTransferFilesCache)
+		{
+			throw new IllegalStateException(
+				"createTransferFilesCache must be true to execute this operation");
+		}
+		if(this.transferFileCache == null)
+		{
+			throw new IllegalStateException("No transferFileCache. Did you build this image?");
+		}
+		
+		final S image = createNewFunc.apply(dockerImageName, this.deleteOnExit)
+			.withBuildArgs(this.buildArgs)
+			.withLoggerForBuild(this.loggerForBuild)
+			.withCreateTransferFilesCache(false)
+			.withTransferFileCache(this.transferFileCache)
+			.withDisablePull(true);
+		
+		this.optDockerFilePath.ifPresent(image::withDockerFilePath);
+		this.optBaseDir.ifPresent(image::withBaseDir);
+		this.optTarget.ifPresent(image::withTarget);
+		
+		return image;
+	}
+	
 	// region with
 	
 	public S withLoggerForBuild(final Logger loggerForBuild)
@@ -484,6 +519,11 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 	}
 	
 	// endregion
+	
+	public String getDockerImageName()
+	{
+		return this.dockerImageName;
+	}
 	
 	@SuppressWarnings("unchecked")
 	protected S self()

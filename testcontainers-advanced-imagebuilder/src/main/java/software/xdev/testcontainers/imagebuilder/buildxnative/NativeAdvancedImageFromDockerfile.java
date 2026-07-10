@@ -29,6 +29,7 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -278,6 +279,28 @@ public class NativeAdvancedImageFromDockerfile
 					this.log().warn("Logging failed", ex);
 				}
 			}, this.executorService());
+	}
+	
+	@Override
+	public NativeAdvancedImageFromDockerfile copyForExactRebuild(final String dockerImageName)
+	{
+		return this.copyForExactRebuild(NativeAdvancedImageFromDockerfile::new, dockerImageName);
+	}
+	
+	@Override
+	protected NativeAdvancedImageFromDockerfile copyForExactRebuild(
+		final BiFunction<String, Boolean, NativeAdvancedImageFromDockerfile> createNewFunc,
+		final String dockerImageName)
+	{
+		final NativeAdvancedImageFromDockerfile image = super.copyForExactRebuild(createNewFunc, dockerImageName)
+			.withAdditionalArgs(this.additionalArgs)
+			.withLoad(this.load)
+			.withTimeout(this.timeout);
+		
+		this.optCacheFrom.ifPresent(image::withCacheFrom);
+		this.optCacheTo.ifPresent(image::withCacheTo);
+		
+		return image;
 	}
 	
 	// region with
