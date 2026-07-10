@@ -1,3 +1,6 @@
+# 4.1.0
+* New method `copyForExactRebuild`
+
 # 4.0.0
 * Add `NativeAdvancedImageFromDockerfile`
   * Builds the image using a new `docker build` process

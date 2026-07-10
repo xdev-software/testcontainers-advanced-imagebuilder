@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
@@ -259,6 +260,22 @@ public class AdvancedImageFromDockerFile
 		state.setExternalDependencyImageNames(externalDependencyImageNames);
 	}
 	
+	@Override
+	public AdvancedImageFromDockerFile copyForExactRebuild(final String dockerImageName)
+	{
+		return this.copyForExactRebuild(AdvancedImageFromDockerFile::new, dockerImageName);
+	}
+	
+	@Override
+	protected AdvancedImageFromDockerFile copyForExactRebuild(
+		final BiFunction<String, Boolean, AdvancedImageFromDockerFile> createNewFunc,
+		final String dockerImageName)
+	{
+		return super.copyForExactRebuild(createNewFunc, dockerImageName)
+			.withExplicitTransferables(this.explicitTransferables)
+			.withBuildImageCmdModifiers(this.buildImageCmdModifiers);
+	}
+	
 	/**
 	 * @see #copyForIntermediateTag(String, String)
 	 */
@@ -278,29 +295,7 @@ public class AdvancedImageFromDockerFile
 	public AdvancedImageFromDockerFile copyForIntermediateTag(
 		final String dockerImageName, final String target)
 	{
-		if(!this.createTransferFilesCache)
-		{
-			throw new IllegalStateException(
-				"createTransferFilesCache must be true to execute this operation");
-		}
-		if(this.transferFileCache == null)
-		{
-			throw new IllegalStateException("No transferFileCache. Did you build this image?");
-		}
-		
-		return new AdvancedImageFromDockerFile(dockerImageName, this.deleteOnExit)
-			// Copy defaults
-			.withExplicitTransferables(this.explicitTransferables)
-			.withBuildArgs(this.buildArgs)
-			.withLoggerForBuild(this.loggerForBuild)
-			.withDockerFilePath(this.optDockerFilePath.orElse(null))
-			.withBaseDir(this.optBaseDir.orElse(null))
-			.withBuildImageCmdModifiers(this.buildImageCmdModifiers)
-			// Special
-			.withCreateTransferFilesCache(false)
-			.withTransferFileCache(this.transferFileCache)
-			.withTarget(target)
-			.withDisablePull(true);
+		return this.copyForExactRebuild(dockerImageName).withTarget(target);
 	}
 	
 	public void cleanCreatedTransferFilesCache()
