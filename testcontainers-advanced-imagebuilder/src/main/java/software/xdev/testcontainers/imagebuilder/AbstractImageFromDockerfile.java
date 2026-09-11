@@ -73,6 +73,7 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 	protected Optional<Path> optDockerFilePath = Optional.empty();
 	protected Optional<Path> optBaseDir = Optional.empty();
 	protected Optional<String> optTarget = Optional.empty();
+	protected final Map<String, String> additionalLabels = new HashMap<>();
 	protected boolean disablePull;
 	
 	protected FilesToTransferHandler filesToTransferHandler = new FilesToTransferHandler();
@@ -143,7 +144,7 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 	@SuppressWarnings("deprecation") // There is no alternative and it's also used in the default implementation
 	protected Map<String, String> createDefaultLabels()
 	{
-		final Map<String, String> labels = new HashMap<>();
+		final Map<String, String> labels = new HashMap<>(DockerClientFactory.DEFAULT_LABELS);
 		
 		if(this.deleteOnExit)
 		{
@@ -151,7 +152,6 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 			labels.putAll(ResourceReaper.instance().getLabels());
 		}
 		
-		labels.putAll(DockerClientFactory.DEFAULT_LABELS);
 		return labels;
 	}
 	
@@ -359,6 +359,24 @@ public abstract class AbstractImageFromDockerfile<S extends AbstractImageFromDoc
 	public S withTarget(final String target)
 	{
 		this.optTarget = Optional.of(target);
+		return this.self();
+	}
+	
+	public S addLabel(final String key, final String value)
+	{
+		this.additionalLabels.put(key, value);
+		return this.self();
+	}
+	
+	public S addLabels(final Map<String, String> labels)
+	{
+		this.additionalLabels.putAll(labels);
+		return this.self();
+	}
+	
+	public S clearAdditionalLabels()
+	{
+		this.additionalLabels.clear();
 		return this.self();
 	}
 	

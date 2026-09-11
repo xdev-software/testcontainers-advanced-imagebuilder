@@ -126,7 +126,9 @@ public class NativeAdvancedImageFromDockerfile
 		this.addCommandArg(this.optCacheFrom, "--cache-from", commandArgs);
 		this.addCommandArg(this.optCacheTo, "--cache-to", commandArgs);
 		
-		this.addKVsToCommand(this.createDefaultLabels(), "--label", commandArgs);
+		final Map<String, String> labels = this.createDefaultLabels();
+		labels.putAll(this.additionalLabels);
+		this.addKVsToCommand(labels, "--label", commandArgs);
 		this.addKVsToCommand(this.buildArgs, "--build-arg", commandArgs);
 		
 		commandArgs.add("-t");

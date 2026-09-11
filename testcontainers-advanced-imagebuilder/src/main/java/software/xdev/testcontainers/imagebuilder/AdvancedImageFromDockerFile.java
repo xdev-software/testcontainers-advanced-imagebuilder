@@ -120,6 +120,7 @@ public class AdvancedImageFromDockerFile
 			final ConfigurationState configurationState = this.configure(buildImageCmd);
 			
 			final Map<String, String> labels = this.createDefaultLabels();
+			labels.putAll(this.additionalLabels);
 			if(buildImageCmd.getLabels() != null)
 			{
 				labels.putAll(buildImageCmd.getLabels());

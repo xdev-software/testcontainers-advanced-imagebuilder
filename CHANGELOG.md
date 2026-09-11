@@ -1,3 +1,6 @@
+# 4.2.0
+* Make it possible to add (additional) labels directly
+
 # 4.1.2
 * Do not copy logger in `copyForExactRebuild`
 
